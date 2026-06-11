@@ -2,7 +2,7 @@
 *(Core Diagnostic Module of the ATLANTE Framework)*
 
 ## 📖 Abstract
-Accurate and rapid segmentation of landslides is critical for disaster response and civil protection. **LENTE** (internally referred to as SAM2TinyLANDSLID) bridges the gap between general-purpose foundation models and the specific needs of Earth Observation by introducing a multimodal, parameter-efficient architecture tailored for topography. 
+Accurate and rapid segmentation of landslides is critical for disaster response and civil protection. **LENTE** (Landslide Early-fusion Neural Transformer Engine ) bridges the gap between general-purpose foundation models and the specific needs of Earth Observation by introducing a multimodal, parameter-efficient architecture tailored for topography. 
 
 By adapting the lightweight **SAM2-Tiny (ViT-based)** backbone, the model expands the optical input from 3 to 12 channels. Crucially, it utilizes a **Dual-Stage DEM-Guided Fusion (DSDF)** mechanism, where terrain features (Slope and DEM) are used to physically guide the optical encoder via a spatial gain map. Utilizing zero-delta attention adapters, the SAM2-Tiny encoder remains frozen, significantly reducing computational load while retaining pre-trained visual priors. 
 

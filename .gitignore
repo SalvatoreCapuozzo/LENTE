@@ -7,4 +7,5 @@ Sen12Landslides/
 dualstream_model/LandSlide4Sense/
 dualstream_model/LandSlide4Sense_split/
 dualstream_model/result/
+dualstream_model/visualizations/
 *.pth
