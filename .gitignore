@@ -1,4 +1,3 @@
-Bijie_dataset/
 only_adapter/
 pesi/
 pesi_sam2/
@@ -8,4 +7,10 @@ dualstream_model/LandSlide4Sense/
 dualstream_model/LandSlide4Sense_split/
 dualstream_model/result/
 dualstream_model/visualizations/
+Bijie_dataset/Bijie-landslide-dataset/
+Bijie_dataset/train/
+Bijie_dataset/val/
+Bijie_dataset/test/
+Bijie_dataset/visualizations/
 *.pth
+*.pyc
