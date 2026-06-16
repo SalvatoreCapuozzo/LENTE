@@ -1,6 +1,8 @@
-import json
+import os
 import yaml
 import torch
+import time
+from datetime import datetime 
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Subset
@@ -23,6 +25,16 @@ def train():
     cfg = load_config()
     DEVICE = cfg["device"]
     TARGET_SIZE = cfg["target_size"]
+
+    # --- Generate timestamped folder name (YYMMDD_hhmm) ---
+    timestamp = datetime.now().strftime("%y%m%d_%H%M")
+    save_dir = timestamp 
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # --- Route the checkpoint to the new folder ---
+    # We use os.path.basename just in case your config has a full path (e.g., "weights/model.pth")
+    ckpt_filename = os.path.basename(cfg["checkpoint_name"])
+    cfg["checkpoint_name"] = os.path.join(save_dir, ckpt_filename)
 
     full_ds = LandslideH5Dataset(cfg["dataset_root"])
     train_subset, val_subset, _, pos_weight = build_train_val_test_subsets(
@@ -51,11 +63,18 @@ def train():
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.3, patience=5)
     scaler = torch.amp.GradScaler(device=DEVICE)
 
+    # Note: Because the folder changes every time you run the script, 
+    # load_checkpoint will not find an existing file here and will always start from Epoch 0.
     start_epoch, best_iou = load_checkpoint(model, optimizer, scheduler, cfg["checkpoint_name"], DEVICE)
     history = []
+    
+    epoch_times = []
     patience_counter = 0
+    total_start_time = time.time() 
 
     for epoch in range(start_epoch, cfg["epochs"]):
+        epoch_start_time = time.time()
+        
         model.train()
         t_loss = t_iou = t_miou = 0.0
         pbar = tqdm(train_loader, desc=f"Ep {epoch+1}/{cfg['epochs']} [TRAIN]")
@@ -102,15 +121,35 @@ def train():
 
         avg_val_loss, avg_val_iou = v_loss / len(val_loader), v_iou / len(val_loader)
         scheduler.step(avg_val_loss)
-        print(f"Val Loss: {avg_val_loss:.4f} | Val IoU: {avg_val_iou:.4f}")
+        
+        epoch_duration = time.time() - epoch_start_time
+        epoch_times.append(epoch_duration)
+        epoch_mins, epoch_secs = divmod(epoch_duration, 60)
+        
+        print(f"Val Loss: {avg_val_loss:.4f} | Val IoU: {avg_val_iou:.4f} | Epoch Time: {int(epoch_mins)}m {int(epoch_secs)}s")
 
         if avg_val_iou > best_iou:
             best_iou = avg_val_iou
             save_checkpoint(model, optimizer, scheduler, epoch, best_iou, cfg["checkpoint_name"])
             patience_counter = 0
+            print(f"--> Saved new best checkpoint to: {cfg['checkpoint_name']}")
         else:
             patience_counter += 1
-            if patience_counter >= cfg["patience"]: break
+            if patience_counter >= cfg["patience"]: 
+                print(f"Early stopping triggered after {epoch + 1} epochs.")
+                break
+
+    total_duration = time.time() - total_start_time
+    total_mins, total_secs = divmod(total_duration, 60)
+    print(f"\nTraining completed in {int(total_mins)}m {int(total_secs)}s.")
+
+    return {
+        "total_time_seconds": total_duration,
+        "epoch_times_seconds": epoch_times,
+        "best_iou": best_iou,
+        "history": history,
+        "save_directory": save_dir # Returning this just in case you want to use it downstream
+    }
 
 if __name__ == "__main__":
-    train()
+    results = train()
