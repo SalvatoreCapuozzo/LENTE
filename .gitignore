@@ -12,5 +12,11 @@ Bijie_dataset/train/
 Bijie_dataset/val/
 Bijie_dataset/test/
 Bijie_dataset/visualizations/
+Bijie_dataset/weights/
+LENTE_SAM/histories/
+LENTE_SAM/history_plots/
+LENTE_setup/history_plots/
 *.pth
 *.pyc
+*.zip
+.vscode

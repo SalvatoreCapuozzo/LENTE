@@ -30,7 +30,7 @@ import yaml
 from LENTE_utils import load_config
 from LENTE_train import train
 from LENTE_test import test
-from LENTE_visualize_results import visualize_test_set
+from LENTE_setup.LENTE_viz import visualize_test_set
 from LENTE_plot_history import plot_history
 
 MODES = ["train", "test", "visualize", "plot", "all"]

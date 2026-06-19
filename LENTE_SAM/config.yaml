@@ -1,0 +1,64 @@
+# ============================================================
+# Unified LENTE config — works for both L4S and Bijie.
+# The launcher (LENTE_run.py) picks a dataset; load_config() merges
+# the `common` block with the chosen `datasets:` block into a flat dict.
+# ============================================================
+
+# Default dataset if you run a script directly without choosing.
+active_dataset: bijie        # "l4s" or "bijie"
+
+# ------------------------------------------------------------
+# Shared across both datasets
+# ------------------------------------------------------------
+common:
+  device: "cuda"
+  random_seed: 42
+  target_size: 1024
+  sam_ckpt_path: "facebook/sam2-hiera-tiny"
+
+  # Training
+  epochs: 100
+  patience: 15
+  batch_size: 8
+  learning_rate: 1.0e-5
+  weight_decay: 1.0e-4
+
+  # Split & augmentation
+  val_fraction: 0.20
+  test_fraction: 0.20
+  aug_copies: 2
+
+  # Model
+  adapter_dim: 64
+
+  # Visualization (0 = all test images, or an integer)
+  viz_num_samples: 0
+
+# ------------------------------------------------------------
+# Per-dataset settings
+# ------------------------------------------------------------
+datasets:
+
+  l4s:
+    dataset_type: "h5"                 # selects the H5 (Landslide4Sense) loader
+    dataset_root: "/datadrive/LENTE/SAM3/SAM2/LandSlide4Sense"
+    checkpoint_name: "best_lente_l4s.pth"
+    history_file: "history_lente_l4s.json"
+    optical_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # 12 Sentinel-2 bands
+    terrain_bands: [12, 13]            # Slope + DEM
+    load_size: null                    # H5 patches already 128x128, no resize needed
+    pos_weight_mode: "heuristic"       # 0.35 landslide-pixel heuristic
+    rgb_channels: [3, 2, 1]            # B4,B3,B2 for natural color
+    rgb_stretch: "minmax"
+
+  bijie:
+    dataset_type: "png"                # selects the PNG (Bijie) loader
+    dataset_root: "/datadrive/LENTE/Bijie-landslide-dataset"
+    checkpoint_name: "best_lente_bijie.pth"
+    history_file: "history_lente_bijie.json"
+    optical_bands: [0, 1, 2]           # RGB TripleSat
+    terrain_bands: [3, 4]              # slope (derived from DEM) + DEM
+    load_size: 256                     # variable-size crops -> uniform load size
+    pos_weight_mode: "pixels"          # real foreground-pixel statistics
+    rgb_channels: [0, 1, 2]
+    rgb_stretch: "clip"
