@@ -1,0 +1,11 @@
+# Same sanity scenes through the real SAM2-Tiny + adapters path at 256 px:
+# checks the LENTE backbone integration end to end on MPS/CPU.
+_base_: synthetic_sanity.yaml
+run_name: synthetic_sanity_sam2
+model: {backbone: sam2, image_size: 256, adapter_dim: 64, mixstyle_p: 0.5}
+train:
+  epochs: 3
+  epoch_size: 256
+  batch_size: 4
+  val_batch_size: 8
+  lr_heads: 3.0e-4

@@ -1,0 +1,309 @@
+# Atlas for the TACO taxonomy (60 categories, names exactly as in
+# TACO data/annotations.json). Each entry DESCRIBES a class in the vocabulary of
+# atlas/schema.yaml. Fields left out are unknown for that class: they are not
+# supervised and they do not count when naming.
+#
+# `stream` is the collection stream used by the monitoring layer. Streams are
+# municipality-specific: edit them here, no retraining involved.
+#
+# Adding a class = appending an entry. Values not present in schema.yaml are
+# accepted: they are scored through the same text path at inference.
+
+name: taco
+entries:
+  - name: Aluminium foil
+    descriptors: {material: [metal], rigidity: flexible and deformable, optics: opaque, shape: a flat sheet,
+                  surface: [metallic and reflective, crumpled or wrinkled], color: [gray or silver], size: hand-sized}
+    prose: "a crumpled sheet of thin shiny aluminium foil"
+    stream: plastic and metal packaging
+  - name: Battery
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: cylindrical like a can or cup,
+                  surface: [metallic and reflective, printed or labelled], size: "tiny, smaller than a finger"}
+    prose: "a small cylindrical household battery with a printed metal casing"
+    stream: hazardous
+  - name: Aluminium blister pack
+    descriptors: {material: [metal, plastic], rigidity: semi-rigid, optics: opaque, shape: a flat sheet,
+                  surface: [metallic and reflective], color: [gray or silver], size: hand-sized}
+    prose: "a flat pill blister pack with an aluminium backing and plastic bubbles"
+    stream: residual
+  - name: Carded blister pack
+    descriptors: {material: [plastic, paper or cardboard], rigidity: semi-rigid, optics: translucent,
+                  shape: a flat sheet, surface: [printed or labelled], size: hand-sized}
+    prose: "a printed cardboard card with a clear plastic blister glued on it"
+    stream: residual
+  - name: Other plastic bottle
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: opaque, shape: bottle-shaped,
+                  surface: [printed or labelled], size: larger than a hand}
+    prose: "an opaque coloured plastic bottle such as a detergent or milk bottle"
+    stream: plastic and metal packaging
+  - name: Clear plastic bottle
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: transparent, shape: bottle-shaped,
+                  surface: [glossy, printed or labelled], color: [colorless], size: larger than a hand}
+    prose: "a transparent PET drink bottle, often crushed, with a printed label"
+    stream: plastic and metal packaging
+  - name: Glass bottle
+    descriptors: {material: [glass], rigidity: rigid, optics: transparent, shape: bottle-shaped,
+                  surface: [glossy, printed or labelled], state: intact, size: larger than a hand}
+    prose: "a rigid glossy glass bottle for beer, wine or soft drinks"
+    stream: glass
+  - name: Plastic bottle cap
+    descriptors: {material: [plastic], rigidity: rigid, optics: opaque, shape: a small lid or cap,
+                  size: "tiny, smaller than a finger"}
+    prose: "a small round plastic screw cap from a bottle"
+    stream: plastic and metal packaging
+  - name: Metal bottle cap
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: a small lid or cap,
+                  surface: [metallic and reflective], size: "tiny, smaller than a finger"}
+    prose: "a small crimped metal crown cap from a glass bottle"
+    stream: plastic and metal packaging
+  - name: Broken glass
+    descriptors: {material: [glass], rigidity: rigid, optics: transparent, shape: a small irregular fragment,
+                  surface: [glossy], state: torn or broken into pieces}
+    prose: "sharp transparent shards of broken glass"
+    stream: glass
+  - name: Food Can
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: cylindrical like a can or cup,
+                  surface: [metallic and reflective, printed or labelled], size: hand-sized}
+    prose: "a cylindrical steel tin can for preserved food"
+    stream: plastic and metal packaging
+  - name: Aerosol
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: cylindrical like a can or cup,
+                  surface: [metallic and reflective, printed or labelled], size: larger than a hand}
+    prose: "a pressurised metal spray can with a nozzle on top"
+    stream: hazardous
+  - name: Drink can
+    descriptors: {material: [metal], rigidity: semi-rigid, optics: opaque, shape: cylindrical like a can or cup,
+                  surface: [metallic and reflective, printed or labelled], size: hand-sized}
+    prose: "a printed aluminium beverage can, often crushed flat"
+    stream: plastic and metal packaging
+  - name: Toilet tube
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque,
+                  shape: cylindrical like a can or cup, surface: [matte], color: [brown or beige], size: hand-sized}
+    prose: "a brown cardboard tube from a toilet paper roll"
+    stream: paper and cardboard
+  - name: Other carton
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [printed or labelled, matte]}
+    prose: "a printed paperboard box or carton"
+    stream: paper and cardboard
+  - name: Egg carton
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [matte], color: [brown or beige], size: larger than a hand}
+    prose: "a moulded grey-brown pulp carton with egg-shaped cups"
+    stream: paper and cardboard
+  - name: Drink carton
+    descriptors: {material: [paper or cardboard, plastic, metal], rigidity: semi-rigid, optics: opaque,
+                  shape: box-shaped, surface: [printed or labelled], size: hand-sized}
+    prose: "a printed multilayer beverage carton for milk or juice"
+    stream: paper and cardboard
+  - name: Corrugated carton
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [matte], color: [brown or beige], size: larger than a hand}
+    prose: "a brown corrugated cardboard box or panel"
+    stream: paper and cardboard
+  - name: Meal carton
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [printed or labelled, dirty or weathered], size: hand-sized}
+    prose: "a printed take-away food box made of paperboard"
+    stream: paper and cardboard
+  - name: Pizza box
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [printed or labelled, dirty or weathered], color: [brown or beige], size: bulky}
+    prose: "a large flat square cardboard pizza box"
+    stream: paper and cardboard
+  - name: Paper cup
+    descriptors: {material: [paper or cardboard, plastic], rigidity: semi-rigid, optics: opaque,
+                  shape: cylindrical like a can or cup, color: [white], size: hand-sized}
+    prose: "a disposable paper coffee cup, often white and printed"
+    stream: paper and cardboard
+  - name: Disposable plastic cup
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: translucent,
+                  shape: cylindrical like a can or cup, size: hand-sized}
+    prose: "a thin disposable plastic drinking cup"
+    stream: plastic and metal packaging
+  - name: Foam cup
+    descriptors: {material: [expanded polystyrene foam], rigidity: semi-rigid, optics: opaque,
+                  shape: cylindrical like a can or cup, surface: [matte], color: [white], size: hand-sized}
+    prose: "a white expanded polystyrene foam cup"
+    stream: plastic and metal packaging
+  - name: Glass cup
+    descriptors: {material: [glass], rigidity: rigid, optics: transparent, shape: cylindrical like a can or cup,
+                  surface: [glossy], size: hand-sized}
+    prose: "a transparent drinking glass"
+    stream: glass
+  - name: Other plastic cup
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: opaque, shape: cylindrical like a can or cup,
+                  size: hand-sized}
+    prose: "an opaque plastic cup or beaker"
+    stream: plastic and metal packaging
+  - name: Food waste
+    descriptors: {material: [food or organic matter], rigidity: flexible and deformable, optics: opaque,
+                  shape: a bulky irregular lump}
+    prose: "leftover food or fruit peel"
+    stream: organic
+  - name: Glass jar
+    descriptors: {material: [glass], rigidity: rigid, optics: transparent, shape: cylindrical like a can or cup,
+                  surface: [glossy, printed or labelled], state: intact, size: hand-sized}
+    prose: "a wide-mouthed transparent glass jar for preserves"
+    stream: glass
+  - name: Plastic lid
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: opaque, shape: a small lid or cap,
+                  size: hand-sized}
+    prose: "a flat round plastic lid from a cup or container"
+    stream: plastic and metal packaging
+  - name: Metal lid
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: a small lid or cap,
+                  surface: [metallic and reflective], size: hand-sized}
+    prose: "a round metal twist-off lid from a jar"
+    stream: plastic and metal packaging
+  - name: Other plastic
+    descriptors: {material: [plastic], shape: a small irregular fragment}
+    prose: "an unidentified piece of plastic"
+    stream: plastic and metal packaging
+  - name: Magazine paper
+    descriptors: {material: [paper or cardboard], rigidity: flexible and deformable, optics: opaque,
+                  shape: a flat sheet, surface: [glossy, printed or labelled]}
+    prose: "a glossy printed page from a magazine or flyer"
+    stream: paper and cardboard
+  - name: Tissues
+    descriptors: {material: [paper or cardboard], rigidity: flexible and deformable, optics: opaque,
+                  shape: a flat sheet, surface: [crumpled or wrinkled, matte], color: [white]}
+    prose: "a crumpled white paper tissue or napkin"
+    stream: residual
+  - name: Wrapping paper
+    descriptors: {material: [paper or cardboard], rigidity: flexible and deformable, optics: opaque,
+                  shape: a flat sheet, surface: [printed or labelled, crumpled or wrinkled]}
+    prose: "a crumpled sheet of printed wrapping paper"
+    stream: paper and cardboard
+  - name: Normal paper
+    descriptors: {material: [paper or cardboard], rigidity: flexible and deformable, optics: opaque,
+                  shape: a flat sheet, surface: [matte], color: [white]}
+    prose: "a plain sheet of white paper"
+    stream: paper and cardboard
+  - name: Paper bag
+    descriptors: {material: [paper or cardboard], rigidity: flexible and deformable, optics: opaque,
+                  shape: a thin film or bag, surface: [matte], color: [brown or beige]}
+    prose: "a brown kraft paper bag"
+    stream: paper and cardboard
+  - name: Plastified paper bag
+    descriptors: {material: [paper or cardboard, plastic], rigidity: flexible and deformable, optics: opaque,
+                  shape: a thin film or bag, surface: [glossy, printed or labelled]}
+    prose: "a glossy laminated paper shopping bag"
+    stream: residual
+  - name: Plastic film
+    descriptors: {material: [plastic], rigidity: flexible and deformable, optics: translucent,
+                  shape: a thin film or bag, surface: [crumpled or wrinkled]}
+    prose: "a thin crumpled translucent plastic film"
+    stream: plastic and metal packaging
+  - name: Six pack rings
+    descriptors: {material: [plastic], rigidity: flexible and deformable, optics: translucent,
+                  shape: string-like or rope-like, size: larger than a hand}
+    prose: "a set of connected plastic rings that hold six cans"
+    stream: plastic and metal packaging
+  - name: Garbage bag
+    descriptors: {material: [plastic], rigidity: flexible and deformable, optics: opaque, shape: a thin film or bag,
+                  surface: [glossy], color: [black], size: bulky}
+    prose: "a large black plastic garbage bag, often full"
+    stream: residual
+  - name: Other plastic wrapper
+    descriptors: {material: [plastic], rigidity: flexible and deformable, optics: opaque, shape: a thin film or bag,
+                  surface: [printed or labelled, crumpled or wrinkled], size: hand-sized}
+    prose: "a printed plastic wrapper from a snack or product"
+    stream: plastic and metal packaging
+  - name: Single-use carrier bag
+    descriptors: {material: [plastic], rigidity: flexible and deformable, optics: translucent,
+                  shape: a thin film or bag, surface: [crumpled or wrinkled], size: larger than a hand}
+    prose: "a thin single-use plastic shopping bag with handles"
+    stream: plastic and metal packaging
+  - name: Polypropylene bag
+    descriptors: {material: [plastic], rigidity: flexible and deformable, optics: opaque, shape: a thin film or bag,
+                  surface: [printed or labelled], size: larger than a hand}
+    prose: "a woven polypropylene bag or sack"
+    stream: plastic and metal packaging
+  - name: Crisp packet
+    descriptors: {material: [plastic, metal], rigidity: flexible and deformable, optics: opaque,
+                  shape: a thin film or bag,
+                  surface: [metallic and reflective, printed or labelled, crumpled or wrinkled], size: hand-sized}
+    prose: "a crumpled metallised plastic bag for crisps or snacks"
+    stream: plastic and metal packaging
+  - name: Spread tub
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [printed or labelled], size: hand-sized}
+    prose: "a printed plastic tub for butter or spread"
+    stream: plastic and metal packaging
+  - name: Tupperware
+    descriptors: {material: [plastic], rigidity: rigid, optics: translucent, shape: box-shaped, size: hand-sized}
+    prose: "a reusable rigid plastic food container"
+    stream: plastic and metal packaging
+  - name: Disposable food container
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: translucent, shape: box-shaped,
+                  size: hand-sized}
+    prose: "a thin clear plastic take-away food container"
+    stream: plastic and metal packaging
+  - name: Foam food container
+    descriptors: {material: [expanded polystyrene foam], rigidity: semi-rigid, optics: opaque, shape: box-shaped,
+                  surface: [matte], color: [white], size: larger than a hand}
+    prose: "a white polystyrene foam take-away box"
+    stream: plastic and metal packaging
+  - name: Other plastic container
+    descriptors: {material: [plastic], rigidity: semi-rigid, optics: opaque, shape: box-shaped}
+    prose: "an opaque plastic container or packaging tray"
+    stream: plastic and metal packaging
+  - name: Plastic glooves
+    descriptors: {material: [plastic, rubber], rigidity: flexible and deformable, optics: translucent,
+                  shape: a thin film or bag, size: hand-sized}
+    prose: "a thin disposable plastic or latex glove"
+    stream: residual
+  - name: Plastic utensils
+    descriptors: {material: [plastic], rigidity: rigid, optics: opaque, shape: an elongated stick-like item,
+                  color: [white], size: hand-sized}
+    prose: "a disposable plastic fork, knife or spoon"
+    stream: residual
+  - name: Pop tab
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: a small irregular fragment,
+                  surface: [metallic and reflective], size: "tiny, smaller than a finger"}
+    prose: "a small aluminium ring-pull tab from a drink can"
+    stream: plastic and metal packaging
+  - name: Rope & strings
+    descriptors: {material: [textile or fabric, plastic], rigidity: flexible and deformable, optics: opaque,
+                  shape: string-like or rope-like}
+    prose: "a piece of rope, string or twine"
+    stream: residual
+  - name: Scrap metal
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, shape: a small irregular fragment,
+                  surface: [metallic and reflective, dirty or weathered]}
+    prose: "a rusty or bent piece of scrap metal"
+    stream: plastic and metal packaging
+  - name: Shoe
+    descriptors: {material: [textile or fabric, rubber], rigidity: semi-rigid, optics: opaque,
+                  shape: a bulky irregular lump, size: larger than a hand}
+    prose: "a discarded shoe with a rubber sole"
+    stream: textile
+  - name: Squeezable tube
+    descriptors: {material: [plastic, metal], rigidity: flexible and deformable, optics: opaque,
+                  shape: a thin tube or straw, surface: [printed or labelled, crumpled or wrinkled], size: hand-sized}
+    prose: "a squeezed tube for toothpaste or cream"
+    stream: plastic and metal packaging
+  - name: Plastic straw
+    descriptors: {material: [plastic], rigidity: semi-rigid, shape: a thin tube or straw, size: hand-sized}
+    prose: "a thin plastic drinking straw"
+    stream: residual
+  - name: Paper straw
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque, shape: a thin tube or straw,
+                  surface: [matte], size: hand-sized}
+    prose: "a paper drinking straw"
+    stream: paper and cardboard
+  - name: Styrofoam piece
+    descriptors: {material: [expanded polystyrene foam], rigidity: semi-rigid, optics: opaque,
+                  shape: a small irregular fragment, surface: [matte], color: [white]}
+    prose: "a broken white piece of styrofoam"
+    stream: plastic and metal packaging
+  - name: Unlabeled litter
+    descriptors: {}
+    prose: "a piece of litter"
+  - name: Cigarette
+    descriptors: {material: [cigarette filter material, paper or cardboard], rigidity: semi-rigid, optics: opaque,
+                  shape: an elongated stick-like item, color: [white, orange or yellow], state: crushed or dented,
+                  size: "tiny, smaller than a finger"}
+    prose: "a smoked cigarette butt with a white or orange filter"
+    stream: residual

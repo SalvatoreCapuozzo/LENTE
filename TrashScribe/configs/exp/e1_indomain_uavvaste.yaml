@@ -1,0 +1,6 @@
+# E1 in-domain: train and test on uavvaste only (conventional reference).
+_base_: ../base.yaml
+run_name: e1_indomain_uavvaste
+train_datasets: [uavvaste]
+test_datasets: [uavvaste]
+train: {transplant_p: 0.0}

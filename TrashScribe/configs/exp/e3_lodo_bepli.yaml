@@ -1,0 +1,6 @@
+# E3 leave-one-dataset-out: bepli is never seen, not even for model selection.
+_base_: ../base.yaml
+run_name: e3_lodo_bepli
+train_datasets: [taco, zerowaste, uavvaste, mju]
+val_datasets: [taco, zerowaste, uavvaste, mju]
+test_datasets: [bepli]

@@ -1,0 +1,159 @@
+# TrashScribe descriptor schema: the controlled vocabulary used to DESCRIBE waste.
+#
+# The model never learns a weight per value or per class. Every value below is a
+# natural-language phrase that is embedded by a frozen text encoder and scored
+# through the same shared projection, so a value added later (here or directly
+# in an atlas entry) is scored by the identical path without retraining.
+#
+#   kind:   single -> values compete in a softmax (exactly one is true)
+#           multi  -> each value is an independent yes/no (sigmoid)
+#   scope:  intrinsic  -> property of the object itself; read from inside its mask
+#           contextual -> property of where it lies; read from a ring around the
+#                         mask. Contextual fields get weight 0 when NAMING an
+#                         object: the beach says nothing about what a bottle is.
+#   weight: how much the field counts when naming (descriptor agreement).
+#   templates: prompt ensemble; "{}" is replaced by the value phrase.
+
+version: 1
+
+fields:
+  material:
+    kind: multi
+    scope: intrinsic
+    weight: 1.0
+    templates:
+      - "an object made of {}"
+      - "a piece of litter made of {}"
+      - "discarded {} waste"
+    values:
+      - plastic
+      - paper or cardboard
+      - metal
+      - glass
+      - textile or fabric
+      - wood
+      - rubber
+      - food or organic matter
+      - expanded polystyrene foam
+      - ceramic or stone
+      - cigarette filter material
+
+  rigidity:
+    kind: single
+    scope: intrinsic
+    weight: 0.8
+    templates:
+      - "a {} object"
+      - "a piece of {} waste"
+    values:
+      - rigid
+      - semi-rigid
+      - flexible and deformable
+
+  optics:
+    kind: single
+    scope: intrinsic
+    weight: 0.8
+    templates:
+      - "a {} object"
+      - "{} litter"
+    values:
+      - transparent
+      - translucent
+      - opaque
+
+  shape:
+    kind: single
+    scope: intrinsic
+    weight: 1.0
+    templates:
+      - "a {} object"
+      - "litter that is {}"
+      - "a piece of waste shaped like {}"
+    values:
+      - bottle-shaped
+      - cylindrical like a can or cup
+      - box-shaped
+      - a flat sheet
+      - a thin film or bag
+      - a small lid or cap
+      - string-like or rope-like
+      - a small irregular fragment
+      - a thin tube or straw
+      - an elongated stick-like item
+      - a bulky irregular lump
+
+  surface:
+    kind: multi
+    scope: intrinsic
+    weight: 0.5
+    templates:
+      - "an object with a {} surface"
+      - "litter with a {} surface"
+    values:
+      - glossy
+      - matte
+      - metallic and reflective
+      - printed or labelled
+      - crumpled or wrinkled
+      - dirty or weathered
+
+  color:
+    kind: multi
+    scope: intrinsic
+    weight: 0.3
+    templates:
+      - "a {} object"
+      - "{} litter"
+    values:
+      - white
+      - black
+      - gray or silver
+      - brown or beige
+      - red
+      - orange or yellow
+      - green
+      - blue
+      - colorless
+      - multicolored
+
+  state:
+    kind: single
+    scope: intrinsic
+    weight: 0.4
+    templates:
+      - "an object that is {}"
+      - "{} waste"
+    values:
+      - intact
+      - crushed or dented
+      - torn or broken into pieces
+
+  size:
+    kind: single
+    scope: intrinsic
+    weight: 0.4
+    templates:
+      - "a {} piece of litter"
+    values:
+      - tiny, smaller than a finger
+      - hand-sized
+      - larger than a hand
+      - bulky
+
+  surroundings:
+    kind: single
+    scope: contextual
+    weight: 0.0          # never used to name an object
+    templates:
+      - "litter lying on {}"
+      - "an object on {}"
+    values:
+      - sand, soil or pebbles
+      - pavement or road
+      - grass or vegetation
+      - water
+      - an indoor floor
+      - a conveyor belt in a recycling plant
+      - a pile of other waste
+      - a seen-from-above aerial view of the ground

@@ -1,0 +1,23 @@
+\documentclass[11pt]{letter}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\signature{Salvatore Capuozzo\\University of Naples Federico II\\salvatore.capuozzo@unina.it}
+\address{[Department]\\University of Naples Federico II\\Via Claudio 21, 80125 Naples, Italy}
+\begin{document}
+\begin{letter}{Editor-in-Chief and Guest Editors\\Neural Computing and Applications\\Topical Collection ``Emerging Trends in Smart Waste Monitoring and Environmental Surveillance''}
+\opening{Dear Editors,}
+
+we submit the manuscript ``TrashScribe: Describing Waste Instead of Naming It --- Attribute-Grounded, Environment-Agnostic Waste Segmentation for Offline Monitoring on the Edge'' for consideration in the Topical Collection \emph{Emerging Trends in Smart Waste Monitoring and Environmental Surveillance}.
+
+The manuscript addresses three gaps named in the call: weak detection across varied environments, limited and incompatible datasets, and real-time operation on resource-constrained devices. It proposes a single waste segmentation model trained on five public datasets with different taxonomies, which describes each object through visual properties (material, rigidity, optical behaviour, shape) instead of fixed classes, so that new waste types and municipal sorting streams are added by editing a text file; it separates object from environment evidence and measures what environment information remains; and it runs fully offline on a Jetson Orin Nano. It is evaluated leave-one-dataset-out, with seven classes held out of every training stage. [One sentence with the main results.]
+
+\textbf{Relation to previous work.} The manuscript is original, has not been published and is not under consideration elsewhere. It builds on two works by the authors that are cited anonymously for double-blind review: [LENTE reference and status], a parameter-efficient SAM2 adaptation for landslide segmentation whose adapter recipe we reuse for a different domain and task; and [``Describing, Not Naming'' reference and status], a descriptor-based retrieval system for parasite-egg microscopy whose descriptor-head principle we transfer from object crops to dense segmentation. Problem, data, architecture components (dense descriptor field, intrinsic/contextual pooling, cross-dataset transplant, environment adversary, edge pipeline), experiments and text are new; no text, table or figure is reused.
+
+\textbf{Possible conflicts.} [Two Guest Editors of this Topical Collection are affiliated with the University of Naples Federico II, as are the authors. We kindly ask that the manuscript be handled by an editor without this affiliation.]
+
+\textbf{Suggested reviewers} (institutional e-mail, no conflicts): [Name, affiliation, e-mail] $\times$ 3--5.
+
+All authors approved the submission. The code and configuration files are available to reviewers at [anonymised URL].
+
+\closing{Sincerely,}
+\end{letter}
+\end{document}

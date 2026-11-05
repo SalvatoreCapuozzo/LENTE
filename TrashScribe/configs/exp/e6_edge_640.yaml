@@ -1,0 +1,5 @@
+# E6 edge model: same recipe at 640 px, the deployment resolution on Jetson Orin Nano.
+_base_: e4_heldout_classes.yaml
+run_name: e6_edge_640
+model: {image_size: 640}
+train: {batch_size: 12, val_batch_size: 12}

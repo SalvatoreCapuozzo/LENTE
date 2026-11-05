@@ -1,0 +1,6 @@
+# E3 leave-one-dataset-out: mju is never seen, not even for model selection.
+_base_: ../base.yaml
+run_name: e3_lodo_mju
+train_datasets: [taco, zerowaste, uavvaste, bepli]
+val_datasets: [taco, zerowaste, uavvaste, bepli]
+test_datasets: [mju]

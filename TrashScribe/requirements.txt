@@ -1,0 +1,16 @@
+# TrashScribe on an NVIDIA workstation (CUDA). Install torch/torchvision first from
+# https://pytorch.org for your CUDA driver, then:  pip install -r requirements.txt
+transformers==5.2.0
+huggingface-hub==1.4.1
+numpy>=2.0,<2.3
+scipy>=1.13
+scikit-learn==1.7.2
+opencv-python>=4.10
+albumentations==2.0.8
+pycocotools>=2.0.8
+PyYAML>=6.0
+pillow>=10
+onnx>=1.17
+onnxruntime-gpu>=1.20      # onnxruntime on CPU-only machines
+onnxsim>=0.4.36
+pytest>=8

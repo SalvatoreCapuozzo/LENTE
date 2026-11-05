@@ -1,0 +1,6 @@
+# E1 in-domain: train and test on mju only (conventional reference).
+_base_: ../base.yaml
+run_name: e1_indomain_mju
+train_datasets: [mju]
+test_datasets: [mju]
+train: {transplant_p: 0.0}

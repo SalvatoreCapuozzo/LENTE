@@ -1,0 +1,9 @@
+# Generic atlas for datasets that only say "this pixel is waste" (UAVVaste,
+# MJU-Waste, StreetView-Waste overflow, PlastOPol, ...). The entry carries no
+# descriptors: those objects train the waste mask and the contours, never the
+# descriptor head (a blank field is not read as a negative).
+name: binary
+entries:
+  - name: waste
+    descriptors: {}
+    prose: "a piece of waste"

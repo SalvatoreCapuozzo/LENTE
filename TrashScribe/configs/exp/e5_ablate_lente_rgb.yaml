@@ -1,0 +1,5 @@
+# E5 ablation: LENTE recipe only: waste mask, no descriptor head, no debiasing.
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_lente_rgb
+model: {adversary: false, mixstyle_p: 0.0}
+train: {transplant_p: 0.0, loss: {desc: 0.0, dense: 0.0, adv: 0.0}}

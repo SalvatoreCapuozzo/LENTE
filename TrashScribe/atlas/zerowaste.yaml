@@ -1,0 +1,22 @@
+# Atlas for ZeroWaste-f (Bashkirova et al., CVPR 2022): 4 foreground classes on
+# a recycling-plant conveyor belt. Class names as in the ZeroWaste COCO files.
+name: zerowaste
+entries:
+  - name: cardboard
+    descriptors: {material: [paper or cardboard], rigidity: semi-rigid, optics: opaque,
+                  surface: [matte], color: [brown or beige]}
+    prose: "a flattened brown cardboard box or panel"
+    stream: paper and cardboard
+  - name: soft_plastic
+    descriptors: {material: [plastic], rigidity: flexible and deformable, shape: a thin film or bag,
+                  surface: [crumpled or wrinkled]}
+    prose: "a crumpled soft plastic bag or film"
+    stream: plastic and metal packaging
+  - name: rigid_plastic
+    descriptors: {material: [plastic], rigidity: rigid}
+    prose: "a rigid plastic bottle, tub or container"
+    stream: plastic and metal packaging
+  - name: metal
+    descriptors: {material: [metal], rigidity: rigid, optics: opaque, surface: [metallic and reflective]}
+    prose: "a metal can or piece of metal packaging"
+    stream: plastic and metal packaging

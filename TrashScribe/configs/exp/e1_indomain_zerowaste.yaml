@@ -1,0 +1,6 @@
+# E1 in-domain: train and test on zerowaste only (conventional reference).
+_base_: ../base.yaml
+run_name: e1_indomain_zerowaste
+train_datasets: [zerowaste]
+test_datasets: [zerowaste]
+train: {transplant_p: 0.0}

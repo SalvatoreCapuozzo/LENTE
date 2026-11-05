@@ -1,0 +1,4 @@
+# E5 ablation: without cross-dataset object transplant.
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_no_transplant
+train: {transplant_p: 0.0}

@@ -1,0 +1,6 @@
+# E1 in-domain: train and test on taco only (conventional reference).
+_base_: ../base.yaml
+run_name: e1_indomain_taco
+train_datasets: [taco]
+test_datasets: [taco]
+train: {transplant_p: 0.0}

@@ -1,0 +1,4 @@
+# E5 ablation: depth-gated early guidance (run scripts/precompute_depth.py and set depth_dir first).
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_geometry
+model: {geometry: true}

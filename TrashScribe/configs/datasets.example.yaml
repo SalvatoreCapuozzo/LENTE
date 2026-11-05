@@ -1,0 +1,79 @@
+# Dataset registry. Paths are relative to `data_root` (base.yaml). Copy this file
+# to configs/datasets.yaml on the GPU machine, fix the paths, then point
+# `datasets_file` at it. Before the first run, check each COCO file with:
+#   python scripts/inspect_dataset.py <ann.json>  --atlas atlas/taco.yaml ...
+# which lists the native categories and which ones the atlas does not cover.
+#
+# `surroundings` must be a value of the schema field of the same name.
+
+datasets:
+  # TACO: 1500 images, 60 classes, scene labels per image. No official split.
+  # https://github.com/pedropro/TACO  (python download.py)
+  - name: taco
+    type: coco
+    images_dir: TACO/data
+    ann_file: TACO/data/annotations.json
+    split: {seed: 42, fractions: {train: 0.7, val: 0.1, test: 0.2}}
+    scene_map:                     # TACO scene_categories -> schema surroundings
+      "Indoor, Man-made": an indoor floor
+      "Pavement": pavement or road
+      "Sand, Dirt, Pebbles": sand, soil or pebbles
+      "Trash": a pile of other waste
+      "Vegetation": grass or vegetation
+      "Water": water
+      # "Clean" is left unmapped on purpose (it describes the absence of litter)
+
+  # ZeroWaste-f: recycling-plant conveyor, 4 classes, official splits.
+  # http://ai.bu.edu/zerowaste/  (adjust folder names to your download)
+  - name: zerowaste
+    type: coco
+    surroundings: a conveyor belt in a recycling plant
+    splits:
+      train: {images_dir: zerowaste-f/train/data, ann_file: zerowaste-f/train/labels.json}
+      val:   {images_dir: zerowaste-f/val/data,   ann_file: zerowaste-f/val/labels.json}
+      test:  {images_dir: zerowaste-f/test/data,  ann_file: zerowaste-f/test/labels.json}
+
+  # UAVVaste: 772 aerial images, litter masks (COCO). Binary for TrashScribe.
+  # https://github.com/PUTvision/UAVVaste
+  - name: uavvaste
+    type: coco
+    images_dir: UAVVaste/images
+    ann_file: UAVVaste/annotations/annotations.json
+    class_map: {"*": waste}
+    surroundings: a seen-from-above aerial view of the ground
+    split: {seed: 42, fractions: {train: 0.7, val: 0.1, test: 0.2}}
+
+  # MJU-Waste: RGB-D indoor, VOC layout with instance PNGs and depth.
+  # https://github.com/realwecan/mju-waste
+  - name: mju
+    type: voc
+    root: MJU-Waste
+    entry: waste
+    surroundings: an indoor floor
+    depth_dir: DepthImages          # enables model.geometry experiments with real depth
+    splits:
+      train: {split_file: train}
+      val:   {split_file: val}
+      test:  {split_file: test}
+
+  # BePLi v2: beach plastic litter, 13 classes, COCO with RLE masks.
+  # https://www.seanoe.org/data/00858/96963/
+  # Class names NOT verified here: run scripts/inspect_dataset.py on the JSON and
+  # either write atlas/bepli.yaml or map the classes below. Until then it trains
+  # as binary waste.
+  - name: bepli
+    type: coco
+    images_dir: BePLi_v2/images
+    ann_file: BePLi_v2/annotations.json
+    class_map: {"*": waste}
+    surroundings: sand, soil or pebbles
+    split: {seed: 42, fractions: {train: 0.7, val: 0.1, test: 0.2}}
+
+  # StreetView-Waste (WACV 2026): overflow masks from fisheye street views.
+  # https://streetview-waste.di.ubi.pt/  (academic licence; format to confirm)
+  # - name: streetview
+  #   type: coco
+  #   images_dir: StreetView-Waste/segmentation/images
+  #   ann_file: StreetView-Waste/segmentation/annotations.json
+  #   class_map: {"*": waste}
+  #   surroundings: pavement or road

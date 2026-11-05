@@ -1,0 +1,6 @@
+# E4 class independence: these TACO classes never reach training (whole images dropped from train AND val);
+# they are named and retrieved at test time from their atlas entry alone. Each is composable from
+# descriptors other classes carry (Glass bottle = glass [jars, shards] x bottle-shaped [plastic bottles]).
+_base_: ../base.yaml
+run_name: e4_heldout_classes
+holdout: ["Glass bottle", "Pop tab", "Plastic straw", "Crisp packet", "Paper bag", "Foam cup", "Egg carton"]

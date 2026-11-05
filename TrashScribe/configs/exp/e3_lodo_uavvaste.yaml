@@ -1,0 +1,6 @@
+# E3 leave-one-dataset-out: uavvaste is never seen, not even for model selection.
+_base_: ../base.yaml
+run_name: e3_lodo_uavvaste
+train_datasets: [taco, zerowaste, mju, bepli]
+val_datasets: [taco, zerowaste, mju, bepli]
+test_datasets: [uavvaste]

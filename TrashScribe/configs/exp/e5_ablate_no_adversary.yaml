@@ -1,0 +1,5 @@
+# E5 ablation: without the environment adversary.
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_no_adversary
+model: {adversary: false}
+train: {loss: {adv: 0.0}}

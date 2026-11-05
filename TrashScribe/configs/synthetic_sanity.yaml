@@ -1,0 +1,24 @@
+# Pipeline sanity check on procedural scenes with a tiny CNN. Runs on a laptop
+# CPU/MPS in minutes. NOT a result: it only proves that every stage trains,
+# evaluates, names held-out compositions and exports.
+_base_: base.yaml
+run_name: synthetic_sanity_tiny
+atlases: []
+text_cache: runs/_cache/text_clip_b16.pt
+datasets:
+  - {name: synthetic, type: synthetic, n: {train: 600, val: 150, test: 300}, size: 256, seed: 0, env_bias: 0.85}
+datasets_file: null
+holdout: ["glass bottle", "metal foil", "paper bag"]
+model: {backbone: tiny, image_size: 256, mixstyle_p: 0.0}
+train:
+  epochs: 12
+  epoch_size: 600
+  batch_size: 16
+  val_batch_size: 16
+  num_workers: 0
+  warmup_steps: 50
+  lr_heads: 1.0e-3
+  patience: 100
+  transplant_cross_only: false
+  aug: {strength: 0.5}
+eval: {n_perm: 200}

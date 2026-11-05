@@ -1,0 +1,14 @@
+# Jetson Orin Nano 8 GB, JetPack 6.x (L4T r36, CUDA 12.x, TensorRT 10.x, Python 3.10).
+#
+# 1) PyTorch for Jetson: install NVIDIA's wheel for your JetPack (do NOT pip install torch
+#    from PyPI, it has no CUDA for aarch64/Tegra). See NVIDIA's "Installing PyTorch for
+#    Jetson Platform" page or the jetson-ai-lab pip index.
+# 2) TensorRT python bindings come with JetPack:  python3 -c "import tensorrt"
+# 3) Then:
+numpy<2.0                 # JetPack 6 wheels are built against numpy 1.x
+scipy
+opencv-python             # or JetPack's OpenCV with GStreamer for CSI cameras
+PyYAML
+pillow
+# optional: onnxruntime-gpu for Jetson (from the jetson-ai-lab index) to run --onnx
+# transformers==5.2.0 only if you want to embed NEW atlas phrases on the device

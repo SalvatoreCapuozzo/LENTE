@@ -1,0 +1,26 @@
+# Classes that appear in NO training dataset, written as text only. They are
+# loaded at inference time to show that a new class costs an atlas entry, not an
+# annotated image set. Values not in schema.yaml (e.g. "a face mask with ear
+# loops") are scored through the same text path as trained ones.
+name: novel
+entries:
+  - name: Disposable face mask
+    descriptors: {material: [textile or fabric, plastic], rigidity: flexible and deformable, optics: opaque,
+                  shape: [a flat sheet, a face mask with ear loops], color: [white, blue], size: hand-sized}
+    prose: "a light-blue or white disposable surgical face mask with elastic ear loops"
+    stream: residual
+  - name: Disposable vape
+    descriptors: {material: [plastic, metal], rigidity: rigid, optics: opaque, shape: an elongated stick-like item,
+                  surface: [glossy, printed or labelled], size: hand-sized}
+    prose: "a small coloured disposable electronic cigarette"
+    stream: hazardous
+  - name: Fishing net
+    descriptors: {material: [plastic, textile or fabric], rigidity: flexible and deformable, optics: translucent,
+                  shape: string-like or rope-like, surface: [dirty or weathered], size: bulky}
+    prose: "a tangled piece of synthetic fishing net"
+    stream: residual
+  - name: Tyre
+    descriptors: {material: [rubber], rigidity: semi-rigid, optics: opaque, shape: a bulky irregular lump,
+                  color: [black], size: bulky}
+    prose: "a discarded black rubber car tyre"
+    stream: residual

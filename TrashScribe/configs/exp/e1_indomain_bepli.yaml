@@ -1,0 +1,6 @@
+# E1 in-domain: train and test on bepli only (conventional reference).
+_base_: ../base.yaml
+run_name: e1_indomain_bepli
+train_datasets: [bepli]
+test_datasets: [bepli]
+train: {transplant_p: 0.0}

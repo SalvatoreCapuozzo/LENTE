@@ -1,0 +1,4 @@
+# E5 ablation: without MixStyle.
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_no_mixstyle
+model: {mixstyle_p: 0.0}

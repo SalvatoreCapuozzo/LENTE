@@ -1,0 +1,5 @@
+# E5 ablation: no transplant, no adversary, no MixStyle.
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_no_debias
+model: {adversary: false, mixstyle_p: 0.0}
+train: {transplant_p: 0.0, loss: {adv: 0.0}}

@@ -1,0 +1,6 @@
+# E3 leave-one-dataset-out: taco is never seen, not even for model selection.
+_base_: ../base.yaml
+run_name: e3_lodo_taco
+train_datasets: [zerowaste, uavvaste, mju, bepli]
+val_datasets: [zerowaste, uavvaste, mju, bepli]
+test_datasets: [taco]

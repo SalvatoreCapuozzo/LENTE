@@ -1,0 +1,4 @@
+# E5 ablation: closed-vocabulary linear probe instead of the open descriptor head (reference; naming n/a).
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_probe
+model: {closed_vocab_probe: true}

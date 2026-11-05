@@ -1,0 +1,4 @@
+# E5 ablation: LoRA r=8 on qkv/proj instead of adapters.
+_base_: e4_heldout_classes.yaml
+run_name: e5_ablate_lora8
+model: {adapter_dim: 0, lora_rank: 8}
