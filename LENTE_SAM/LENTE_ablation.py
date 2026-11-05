@@ -26,7 +26,6 @@ Uso:
     python LENTE_ablation.py --dataset bijie
     python LENTE_ablation.py -d l4s --epochs 30 --batch-size 4
     python LENTE_ablation.py -d bijie --variants no_dfds_no_adapter
-    python LENTE_ablation.py -d l4s --test-only
 """
 
 import os
@@ -404,66 +403,6 @@ def run_ablation(cfg, variants):
     print("\nPer i grafici:  python LENTE_plot_history.py histories/HISTORY_*ablation*.json")
     return results
 
-# ============================================================
-# TEST ONLY (EVALUATE EXISTING ABLATION CHECKPOINTS)
-# ============================================================
-
-def test_ablation(cfg, variants):
-    DEVICE = cfg["device"]
-    base, ext = os.path.splitext(cfg["checkpoint_name"])
-    ext = ext or ".pth"
-
-    print("\n" + "=" * 60)
-    print(f"AVVIO TEST ABLAZIONI — {cfg['dataset_name']}")
-    print("=" * 60)
-
-    # 1. Build strictly the test dataset
-    full_ds = build_dataset(cfg)
-    _, _, test_subset, pos_weight = build_train_val_test_subsets(full_ds, cfg)
-    
-    eval_trans = A.Compose([ToTensorV2()])
-    test_ds = TransformSubset(test_subset, eval_trans)
-    test_loader = DataLoader(test_ds, batch_size=cfg["batch_size"], shuffle=False, pin_memory=True)
-
-    results = []
-
-    # 2. Evaluate each requested variant
-    for variant_name in variants:
-        ckpt_path = f"{base}_ablation_{variant_name}{ext}"
-        flags = VARIANTS[variant_name]
-        
-        print(f"\n--- Testing variante: '{variant_name}' ---")
-        if not os.path.exists(ckpt_path):
-            print(f"[ERRORE] Checkpoint non trovato: {ckpt_path}. Skipping.")
-            continue
-
-        # Build model and load weights
-        model = build_ablation_model(cfg, DEVICE, use_dfds=flags["use_dfds"], use_adapter=flags["use_adapter"])
-        ckpt = torch.load(ckpt_path, map_location=DEVICE)
-        model.load_state_dict(ckpt["model_state_dict"], strict=False)
-
-        # Run evaluation
-        test_metrics = evaluate(model, test_loader, pos_weight, cfg, desc=f"[{variant_name}] [TEST]")
-        results.append({"variant": variant_name, "metrics": test_metrics})
-
-    # 3. Print comparative summary
-    if results:
-        print("\n" + "=" * 80)
-        print(f"RIEPILOGO TEST (SOLO VALUTAZIONE) — {cfg['dataset_name']}")
-        print("=" * 80)
-        
-        # Create dynamic headers based on METRIC_KEYS
-        header = f"{'variante':22s} " + " ".join([f"{k:>9s}" for k in METRIC_KEYS])
-        print(header)
-        print("-" * len(header))
-        
-        for r in results:
-            m = r["metrics"]
-            row = f"{r['variant']:22s} " + " ".join([f"{m[k]:9.4f}" for k in METRIC_KEYS])
-            print(row)
-            
-    return results
-
 
 def apply_overrides(cfg, args):
     if args.epochs is not None:      cfg["epochs"] = args.epochs
@@ -480,10 +419,6 @@ def main():
     ap.add_argument("--variants", nargs="*", default=list(VARIANTS.keys()),
                     choices=list(VARIANTS.keys()),
                     help="quali varianti eseguire (default: tutte)")
-    
-    # Nuovo flag per eseguire SOLO il test sui pesi salvati
-    ap.add_argument("--test-only", action="store_true", help="Salta il training e valuta i checkpoint esistenti")
-    
     # override opzionali
     ap.add_argument("--epochs", type=int, default=None)
     ap.add_argument("--batch-size", type=int, default=None)
@@ -498,16 +433,9 @@ def main():
     print(f"  Dataset : {cfg['dataset_name']}  (n_optical={cfg['n_optical']}, type={cfg['dataset_type']})")
     print(f"  Device  : {cfg['device']} | epochs={cfg['epochs']} | batch={cfg['batch_size']} | lr={cfg['learning_rate']}")
     print(f"  Varianti: {', '.join(args.variants)}")
-    print(f"  Mode    : {'TEST ONLY' if args.test_only else 'TRAIN & TEST'}")
     print("=" * 50)
 
-    if args.test_only:
-        test_ablation(cfg, args.variants)
-    else:
-        run_ablation(cfg, args.variants)
-
-if __name__ == "__main__":
-    main()
+    run_ablation(cfg, args.variants)
 
 
 if __name__ == "__main__":

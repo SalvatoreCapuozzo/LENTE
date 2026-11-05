@@ -1,0 +1,41 @@
+{
+  "checkpoint": "best_lente_l4s_perimg.pth",
+  "quando": "2026-08-31 17:13:43",
+  "config": {
+    "dataset_name": "l4s",
+    "target_size": 512,
+    "adapter_dim": 256,
+    "prompt_source": "yolo_box",
+    "yolo_prompt": "box",
+    "yolo_weights": "runs/detect/train-5/weights/best.pt",
+    "yolo_conf": 0.1,
+    "yolo_dense_conf": 0.05,
+    "yolo_dense_max_det": 10,
+    "yolo_bands": [
+      7,
+      3,
+      2
+    ],
+    "yolo_imgsz": 512,
+    "refine_passes": 0,
+    "refine_lambda": 0.5,
+    "loss_region": "dice",
+    "loss_per_image": false,
+    "loss_tversky_beta": 0.7,
+    "lambda_dice": 0.3,
+    "unfreeze_prompt_encoder": false,
+    "learning_rate": 1e-05,
+    "batch_size": 8,
+    "pos_weight_mode": "sqrt",
+    "random_seed": 42,
+    "aug_copies": 2
+  },
+  "n_batch": 95,
+  "test_loss": 0.2119012707353923,
+  "test_iou": 0.6309566038066184,
+  "test_miou": 0.8064917628401603,
+  "test_f1": 0.757678669791571,
+  "yolo_campioni_con_box": 402,
+  "yolo_totale": 759,
+  "dense_scale": 1.0
+}

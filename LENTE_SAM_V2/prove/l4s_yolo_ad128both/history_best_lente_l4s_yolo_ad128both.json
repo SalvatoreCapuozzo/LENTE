@@ -1,0 +1,54 @@
+{
+  "checkpoint": "best_lente_l4s_yolo_ad128both.pth",
+  "inizio": "2026-09-03 14:49:56",
+  "config": {
+    "dataset_name": "l4s",
+    "target_size": 512,
+    "adapter_dim": 128,
+    "prompt_source": "yolo_box",
+    "yolo_prompt": "dense",
+    "yolo_weights": "runs/detect/train-5/weights/best.pt",
+    "yolo_conf": 0.1,
+    "yolo_dense_conf": 0.05,
+    "yolo_dense_max_det": 10,
+    "yolo_bands": [
+      7,
+      3,
+      2
+    ],
+    "yolo_imgsz": 512,
+    "refine_passes": 1,
+    "refine_lambda": 0.5,
+    "loss_region": "dice",
+    "loss_per_image": true,
+    "loss_tversky_beta": 0.7,
+    "lambda_dice": 0.3,
+    "unfreeze_prompt_encoder": false,
+    "learning_rate": 1e-05,
+    "batch_size": 8,
+    "pos_weight_mode": "sqrt",
+    "random_seed": 42,
+    "aug_copies": 2
+  },
+  "epoche": [
+    {
+      "epoca": 3,
+      "train_loss": 0.4309206198105651,
+      "train_iou": 0.45489896991758055,
+      "train_miou": 0.7105358079984713,
+      "val_loss": 0.4009927854726189,
+      "val_iou": 0.46698810113103767,
+      "val_micro_iou": 0.406872546974612,
+      "val_micro_f1": 0.5784071170477596,
+      "lr": 1e-05,
+      "val_iou_frane": 0.42367908358573914,
+      "val_iou_vuote": 0.522522509098053,
+      "k": 1.0388725996017456,
+      "kr": 0.9272029399871826,
+      "criterio": "val_iou_frane",
+      "record": true
+    }
+  ],
+  "best_val_iou": 0.42367908358573914,
+  "ultima_epoca": 3
+}

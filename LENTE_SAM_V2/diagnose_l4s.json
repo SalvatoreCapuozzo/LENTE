@@ -1,0 +1,525 @@
+{
+  "quando": "2026-08-31 19:39:52",
+  "classificatore": "clf_scores_l4s.npz",
+  "run": [
+    {
+      "checkpoint": "best_lente_l4s_refine.pth",
+      "prompt_source": "yolo_box",
+      "target_size": 512,
+      "adapter_dim": 256,
+      "dense": true,
+      "refine_passes": 1,
+      "chiavi_mancanti": 0,
+      "nome": "best_lente_l4s_refine.pth   (yolo_box@512, adapter=256, dense=True, refine=1)",
+      "n_val": 760,
+      "n_test": 759,
+      "val_vuote": 333,
+      "test_vuote": 306,
+      "baseline": {
+        "vuote": 0.8235294139863331,
+        "con_frana": 0.49102850110838464,
+        "totale": 0.625080252545344,
+        "micro_iou": 0.5832216917509571,
+        "micro_f1": 0.7367530331219068
+      },
+      "gate": {
+        "SOGLIA GLOBALE": {
+          "scelto_sul_val": "0.65",
+          "dettaglio": "taglio della sigmoide",
+          "val": {
+            "vuote": 0.8348348364017874,
+            "con_frana": 0.4627287388038566,
+            "totale": 0.6257699631461079
+          },
+          "test": {
+            "vuote": 0.8692810465345432,
+            "con_frana": 0.48978591033664015,
+            "totale": 0.64278394943619,
+            "guadagno": 0.017703696890845944,
+            "micro_iou": 0.5970369382189019,
+            "micro_f1": 0.7476808130496322,
+            "micro_guadagno": 0.013815246467944853
+          }
+        },
+        "GATE sull'AREA PREDETTA": {
+          "scelto_sul_val": "50 pixel",
+          "dettaglio": "azzera 93.8% delle vuote, 13.9% delle frane",
+          "val": {
+            "vuote": 0.9099099099871805,
+            "con_frana": 0.44024882515065855,
+            "totale": 0.6460345373224503
+          },
+          "test": {
+            "vuote": 0.9379084967997283,
+            "con_frana": 0.4527004912464587,
+            "totale": 0.6483179480307808,
+            "guadagno": 0.02323769548543675,
+            "micro_iou": 0.5830557018774043,
+            "micro_f1": 0.7366205765039563,
+            "micro_guadagno": -0.00016598987355276318
+          }
+        },
+        "GATE su YOLO": {
+          "scelto_sul_val": "conf_max < 0.10",
+          "dettaglio": "azzera 91.5% delle vuote, 17.0% delle frane",
+          "val": {
+            "vuote": 0.9309309316492667,
+            "con_frana": 0.42323318306303603,
+            "totale": 0.6456849597462134
+          },
+          "test": {
+            "vuote": 0.9281045757149385,
+            "con_frana": 0.43812008944290315,
+            "totale": 0.6356632420110755,
+            "guadagno": 0.01058298946573144,
+            "micro_iou": 0.5830137807070102,
+            "micro_f1": 0.7365871198501164,
+            "micro_guadagno": -0.00020791104394690674
+          }
+        },
+        "GATE sul CLASSIFICATORE": {
+          "scelto_sul_val": "p(frana) < 0.30",
+          "dettaglio": "azzera 90.5% delle vuote, 8.6% delle frane",
+          "val": {
+            "vuote": 0.9369369375135672,
+            "con_frana": 0.454564112159697,
+            "totale": 0.6659195737950111
+          },
+          "test": {
+            "vuote": 0.934640523536845,
+            "con_frana": 0.46715876274771334,
+            "totale": 0.6556296702595372,
+            "guadagno": 0.030549417714193172,
+            "micro_iou": 0.5846476356304985,
+            "micro_f1": 0.7378897648724024,
+            "micro_guadagno": 0.0014259438795414248
+          }
+        },
+        "GATE COMBINATO (area E yolo)": {
+          "scelto_sul_val": "area < 50 px  e  conf < 0.30",
+          "dettaglio": "azzera 93.5% delle vuote, 13.9% delle frane",
+          "val": {
+            "vuote": 0.9099099099871805,
+            "con_frana": 0.4402488251453194,
+            "totale": 0.6460345373194505
+          },
+          "test": {
+            "vuote": 0.9346405229506235,
+            "con_frana": 0.4527004912464587,
+            "totale": 0.6470004249769915,
+            "guadagno": 0.021920172431647456,
+            "micro_iou": 0.5829945482777255,
+            "micro_f1": 0.7365717701454055,
+            "micro_guadagno": -0.00022714347323160577
+          }
+        },
+        "GATE COMBINATO (classificatore E area)": {
+          "scelto_sul_val": "p(frana) < 0.30  e  area < 300 px",
+          "dettaglio": "azzera 90.2% delle vuote, 7.9% delle frane",
+          "val": {
+            "vuote": 0.9249249255030662,
+            "con_frana": 0.4573546837452671,
+            "totale": 0.6622242765154606
+          },
+          "test": {
+            "vuote": 0.9313725496817145,
+            "con_frana": 0.47040787068558754,
+            "totale": 0.656251338106951,
+            "guadagno": 0.03117108556160697,
+            "micro_iou": 0.5847851521439082,
+            "micro_f1": 0.7379992819251328,
+            "micro_guadagno": 0.001563460392951188
+          }
+        },
+        "GATE COMBINATO (classificatore O area)": {
+          "scelto_sul_val": "p(frana) < 0.30  oppure  area < 5 px",
+          "dettaglio": "azzera 94.4% delle vuote, 10.6% delle frane",
+          "val": {
+            "vuote": 0.9429429430691227,
+            "con_frana": 0.4543685011313615,
+            "totale": 0.6684412500330386
+          },
+          "test": {
+            "vuote": 0.9444444446152765,
+            "con_frana": 0.46650378860616054,
+            "totale": 0.6591913258114167,
+            "guadagno": 0.034111073266072656,
+            "micro_iou": 0.5846486233844786,
+            "micro_f1": 0.7378905515795562,
+            "micro_guadagno": 0.0014269316335215887
+          }
+        },
+        "GATE COMBINATO (classificatore E yolo)": {
+          "scelto_sul_val": "p(frana) < 0.30  e  conf < 0.30",
+          "dettaglio": "azzera 89.9% delle vuote, 8.4% delle frane",
+          "val": {
+            "vuote": 0.9339339345107902,
+            "con_frana": 0.4549996956746503,
+            "totale": 0.6648485134804852
+          },
+          "test": {
+            "vuote": 0.9281045758333879,
+            "con_frana": 0.4689015302586454,
+            "totale": 0.6540347739290949,
+            "guadagno": 0.028954521383750875,
+            "micro_iou": 0.584440088662551,
+            "micro_f1": 0.7377244401281029,
+            "micro_guadagno": 0.0012183969115939774
+          }
+        }
+      },
+      "micro_ottimizzata": {
+        "soglia": 0.7,
+        "iou": 0.5971992429290639,
+        "f1": 0.7478080716265243
+      },
+      "tetto_classificatore_perfetto": 0.6962264967089569
+    },
+    {
+      "checkpoint": "best_lente_l4s_dense.pth",
+      "prompt_source": "yolo_box",
+      "target_size": 512,
+      "adapter_dim": 256,
+      "dense": true,
+      "refine_passes": 0,
+      "chiavi_mancanti": 1,
+      "nome": "best_lente_l4s_dense.pth   (yolo_box@512, adapter=256, dense=True, refine=0)",
+      "n_val": 760,
+      "n_test": 759,
+      "val_vuote": 333,
+      "test_vuote": 306,
+      "baseline": {
+        "vuote": 0.9346405243037029,
+        "con_frana": 0.35323373502551236,
+        "totale": 0.5876348911771939,
+        "micro_iou": 0.5201708268518458,
+        "micro_f1": 0.6843583861283257
+      },
+      "gate": {
+        "SOGLIA GLOBALE": {
+          "scelto_sul_val": "0.55",
+          "dettaglio": "taglio della sigmoide",
+          "val": {
+            "vuote": 0.9249249266442523,
+            "con_frana": 0.32318898528348494,
+            "totale": 0.5868443385376106
+          },
+          "test": {
+            "vuote": 0.9477124190473161,
+            "con_frana": 0.3513189497896082,
+            "totale": 0.5917621666444943,
+            "guadagno": 0.004127275467300406,
+            "micro_iou": 0.5276809269849624,
+            "micro_f1": 0.6908260981256024,
+            "micro_guadagno": 0.007510100133116593
+          }
+        },
+        "GATE sull'AREA PREDETTA": {
+          "scelto_sul_val": "15 pixel",
+          "dettaglio": "azzera 96.1% delle vuote, 30.0% delle frane",
+          "val": {
+            "vuote": 0.9699699700133809,
+            "con_frana": 0.32477732433028905,
+            "totale": 0.6074735756624858
+          },
+          "test": {
+            "vuote": 0.9607843138301062,
+            "con_frana": 0.35032913336518945,
+            "totale": 0.5964414986119148,
+            "guadagno": 0.008806607434720837,
+            "micro_iou": 0.5202118231451798,
+            "micro_f1": 0.6843938656770988,
+            "micro_guadagno": 4.099629333398358e-05
+          }
+        },
+        "GATE su YOLO": {
+          "scelto_sul_val": "conf_max < 0.10",
+          "dettaglio": "azzera 91.5% delle vuote, 17.0% delle frane",
+          "val": {
+            "vuote": 0.9669669677852951,
+            "con_frana": 0.31996185786657566,
+            "totale": 0.6034522547125409
+          },
+          "test": {
+            "vuote": 0.9575163407224774,
+            "con_frana": 0.3472137626889218,
+            "totale": 0.5932646044257703,
+            "guadagno": 0.005629713248576418,
+            "micro_iou": 0.5201660826342089,
+            "micro_f1": 0.6843542802018617,
+            "micro_guadagno": -4.7442176368539535e-06
+          }
+        },
+        "GATE sul CLASSIFICATORE": {
+          "scelto_sul_val": "p(frana) < 0.30",
+          "dettaglio": "azzera 90.5% delle vuote, 8.6% delle frane",
+          "val": {
+            "vuote": 0.9789789795378712,
+            "con_frana": 0.32053958840556607,
+            "totale": 0.609040005835905
+          },
+          "test": {
+            "vuote": 0.9738562096760771,
+            "con_frana": 0.3467399760861244,
+            "totale": 0.5995694457548011,
+            "guadagno": 0.01193455457760717,
+            "micro_iou": 0.5200858282469712,
+            "micro_f1": 0.6842848194259619,
+            "micro_guadagno": -8.499860487454214e-05
+          }
+        },
+        "GATE COMBINATO (area E yolo)": {
+          "scelto_sul_val": "area < 15 px  e  conf < 0.30",
+          "dettaglio": "azzera 95.8% delle vuote, 29.1% delle frane",
+          "val": {
+            "vuote": 0.9699699700133809,
+            "con_frana": 0.32477732433028905,
+            "totale": 0.6074735756624858
+          },
+          "test": {
+            "vuote": 0.9575163400102078,
+            "con_frana": 0.35032913336518945,
+            "totale": 0.5951239755699003,
+            "guadagno": 0.007489084392706347,
+            "micro_iou": 0.5202015781388815,
+            "micro_f1": 0.684384999489005,
+            "micro_guadagno": 3.075128703566854e-05
+          }
+        },
+        "GATE COMBINATO (classificatore E area)": {
+          "scelto_sul_val": "p(frana) < 0.30  e  area < 300 px",
+          "dettaglio": "azzera 90.5% delle vuote, 8.2% delle frane",
+          "val": {
+            "vuote": 0.9729729735326658,
+            "con_frana": 0.3220922068208761,
+            "totale": 0.6072807532880155
+          },
+          "test": {
+            "vuote": 0.9738562096760771,
+            "con_frana": 0.3481376499502998,
+            "totale": 0.6004036305512062,
+            "guadagno": 0.012768739374012239,
+            "micro_iou": 0.5202254525699666,
+            "micro_f1": 0.6844056606084534,
+            "micro_guadagno": 5.462571812075989e-05
+          }
+        },
+        "GATE COMBINATO (classificatore O area)": {
+          "scelto_sul_val": "p(frana) < 0.30  oppure  area < 10 px",
+          "dettaglio": "azzera 98.4% delle vuote, 30.7% delle frane",
+          "val": {
+            "vuote": 0.9939939940023357,
+            "con_frana": 0.3200244986367369,
+            "totale": 0.6153295538429795
+          },
+          "test": {
+            "vuote": 0.9836601307726639,
+            "con_frana": 0.345235204708481,
+            "totale": 0.6026239100782307,
+            "guadagno": 0.014989018901036766,
+            "micro_iou": 0.5200937327213206,
+            "micro_f1": 0.6842916611335962,
+            "micro_guadagno": -7.709413052514602e-05
+          }
+        },
+        "GATE COMBINATO (classificatore E yolo)": {
+          "scelto_sul_val": "p(frana) < 0.30  e  conf < 0.30",
+          "dettaglio": "azzera 89.9% delle vuote, 8.4% delle frane",
+          "val": {
+            "vuote": 0.975975976536252,
+            "con_frana": 0.32086134707588565,
+            "totale": 0.6079049939315462
+          },
+          "test": {
+            "vuote": 0.9673202619713837,
+            "con_frana": 0.3467399760861244,
+            "totale": 0.5969343996446083,
+            "guadagno": 0.009299508467414341,
+            "micro_iou": 0.5198246579668131,
+            "micro_f1": 0.6840587238033402,
+            "micro_guadagno": -0.00034616888503269383
+          }
+        }
+      },
+      "micro_ottimizzata": {
+        "soglia": 0.65,
+        "iou": 0.5357483317445186,
+        "f1": 0.6977032898820609
+      },
+      "tetto_classificatore_perfetto": 0.6139853517345943
+    },
+    {
+      "checkpoint": "best_lente_l4s_free512.pth",
+      "prompt_source": "none",
+      "target_size": 512,
+      "adapter_dim": 256,
+      "dense": false,
+      "refine_passes": 0,
+      "chiavi_mancanti": 2,
+      "nome": "best_lente_l4s_free512.pth   (none@512, adapter=256, dense=False, refine=0)",
+      "n_val": 760,
+      "n_test": 759,
+      "val_vuote": 333,
+      "test_vuote": 306,
+      "baseline": {
+        "vuote": 0.7843137289988901,
+        "con_frana": 0.446796334417101,
+        "totale": 0.5828705409283361,
+        "micro_iou": 0.5331380676417083,
+        "micro_f1": 0.6954860477266576
+      },
+      "gate": {
+        "SOGLIA GLOBALE": {
+          "scelto_sul_val": "0.65",
+          "dettaglio": "taglio della sigmoide",
+          "val": {
+            "vuote": 0.7897897934710089,
+            "con_frana": 0.4086473385720555,
+            "totale": 0.5756479142054127
+          },
+          "test": {
+            "vuote": 0.8267973882375064,
+            "con_frana": 0.42965827878196083,
+            "totale": 0.5897696984043547,
+            "guadagno": 0.006899157476018547,
+            "micro_iou": 0.5299098679263268,
+            "micro_f1": 0.69273344663706,
+            "micro_guadagno": -0.0032281997153815745
+          }
+        },
+        "GATE sull'AREA PREDETTA": {
+          "scelto_sul_val": "50 pixel",
+          "dettaglio": "azzera 91.8% delle vuote, 17.0% delle frane",
+          "val": {
+            "vuote": 0.8888888889745384,
+            "con_frana": 0.4070823732224017,
+            "totale": 0.6181897018348511
+          },
+          "test": {
+            "vuote": 0.9183006536694832,
+            "con_frana": 0.412910961162584,
+            "totale": 0.6166649083392786,
+            "guadagno": 0.03379436741094244,
+            "micro_iou": 0.5324585518473653,
+            "micro_f1": 0.6949076060889102,
+            "micro_guadagno": -0.0006795157943429997
+          }
+        },
+        "GATE su YOLO": {
+          "scelto_sul_val": "conf_max < 0.10",
+          "dettaglio": "azzera 91.5% delle vuote, 17.0% delle frane",
+          "val": {
+            "vuote": 0.9429429432104978,
+            "con_frana": 0.3913234806346558,
+            "totale": 0.6330199030527549
+          },
+          "test": {
+            "vuote": 0.9411764711484898,
+            "con_frana": 0.3992575009782593,
+            "totale": 0.6177386668176407,
+            "guadagno": 0.034868125889304546,
+            "micro_iou": 0.5340840375794581,
+            "micro_f1": 0.6962904567107787,
+            "micro_guadagno": 0.0009459699377497577
+          }
+        },
+        "GATE sul CLASSIFICATORE": {
+          "scelto_sul_val": "p(frana) < 0.30",
+          "dettaglio": "azzera 90.5% delle vuote, 8.6% delle frane",
+          "val": {
+            "vuote": 0.9249249253378267,
+            "con_frana": 0.41904397572695234,
+            "totale": 0.6406997075959275
+          },
+          "test": {
+            "vuote": 0.9346405237306127,
+            "con_frana": 0.42616124044534925,
+            "totale": 0.6311607933903962,
+            "guadagno": 0.04829025246206009,
+            "micro_iou": 0.5364453825599981,
+            "micro_f1": 0.6982941126956069,
+            "micro_guadagno": 0.0033073149182897277
+          }
+        },
+        "GATE COMBINATO (area E yolo)": {
+          "scelto_sul_val": "area < 200 px  e  conf < 0.10",
+          "dettaglio": "azzera 90.2% delle vuote, 14.1% delle frane",
+          "val": {
+            "vuote": 0.9129129131875827,
+            "con_frana": 0.3995599879238111,
+            "totale": 0.6244896249143848
+          },
+          "test": {
+            "vuote": 0.9281045757278598,
+            "con_frana": 0.4106128091475662,
+            "totale": 0.6192458533815186,
+            "guadagno": 0.036375312453182485,
+            "micro_iou": 0.5337259854759187,
+            "micro_f1": 0.6959861025113978,
+            "micro_guadagno": 0.0005879178342103053
+          }
+        },
+        "GATE COMBINATO (classificatore E area)": {
+          "scelto_sul_val": "p(frana) < 0.30  e  area < 300 px",
+          "dettaglio": "azzera 89.9% delle vuote, 7.7% delle frane",
+          "val": {
+            "vuote": 0.9039039043200401,
+            "con_frana": 0.4214153769519062,
+            "totale": 0.6328215343382069
+          },
+          "test": {
+            "vuote": 0.9281045760199601,
+            "con_frana": 0.4290479366389398,
+            "totale": 0.6302486371008531,
+            "guadagno": 0.04737809617251698,
+            "micro_iou": 0.535033979769845,
+            "micro_f1": 0.6970972458213143,
+            "micro_guadagno": 0.0018959121281366675
+          }
+        },
+        "GATE COMBINATO (classificatore O area)": {
+          "scelto_sul_val": "p(frana) < 0.30  oppure  area < 50 px",
+          "dettaglio": "azzera 97.1% delle vuote, 19.0% delle frane",
+          "val": {
+            "vuote": 0.9609609609889259,
+            "con_frana": 0.3983606571394208,
+            "totale": 0.6448684218524277
+          },
+          "test": {
+            "vuote": 0.9705882353205473,
+            "con_frana": 0.40630681842015115,
+            "totale": 0.6338036742456074,
+            "guadagno": 0.05093313331727123,
+            "micro_iou": 0.5357307751500539,
+            "micro_f1": 0.6976884019241048,
+            "micro_guadagno": 0.0025927075083455042
+          }
+        },
+        "GATE COMBINATO (classificatore E yolo)": {
+          "scelto_sul_val": "p(frana) < 0.30  e  conf < 0.30",
+          "dettaglio": "azzera 89.9% delle vuote, 8.4% delle frane",
+          "val": {
+            "vuote": 0.9219219223351934,
+            "con_frana": 0.4198133472846861,
+            "totale": 0.6398161834581321
+          },
+          "test": {
+            "vuote": 0.9281045760270846,
+            "con_frana": 0.4277947945256856,
+            "totale": 0.6295007143404789,
+            "guadagno": 0.04663017341214282,
+            "micro_iou": 0.5362320961279105,
+            "micro_f1": 0.6981133872667928,
+            "micro_guadagno": 0.003094028486202105
+          }
+        }
+      },
+      "micro_ottimizzata": {
+        "soglia": 0.55,
+        "iou": 0.5346711509715995,
+        "f1": 0.6967892119860328
+      },
+      "tetto_classificatore_perfetto": 0.6698270612528943
+    }
+  ]
+}

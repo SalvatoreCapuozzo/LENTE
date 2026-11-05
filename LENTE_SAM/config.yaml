@@ -41,7 +41,7 @@ datasets:
 
   l4s:
     dataset_type: "h5"                 # selects the H5 (Landslide4Sense) loader
-    dataset_root: "/datadrive/LENTE/SAM3/SAM2/LandSlide4Sense"
+    dataset_root: "/datadrive/LENTE/dualstream_model/LandSlide4Sense/"
     checkpoint_name: "best_lente_l4s.pth"
     history_file: "history_lente_l4s.json"
     optical_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # 12 Sentinel-2 bands
@@ -50,10 +50,17 @@ datasets:
     pos_weight_mode: "heuristic"       # 0.35 landslide-pixel heuristic
     rgb_channels: [3, 2, 1]            # B4,B3,B2 for natural color
     rgb_stretch: "minmax"
+    # D2FLS comparison (LENTE_compare.py): come mappare lo stack LENTE sull'input D2FLS
+    d2fls:
+      checkpoint_name: "best_d2fls_base_ms_in22k.pth"
+      opt_channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # 12 S2 + slope -> 13ch
+      dem_channel: 13
+      in_channels_opt: 13
+      img_size: 128                    # patch L4S 128x128
 
   bijie:
     dataset_type: "png"                # selects the PNG (Bijie) loader
-    dataset_root: "/datadrive/LENTE/Bijie-landslide-dataset"
+    dataset_root: "/datadrive/LENTE/Bijie_dataset/Bijie-landslide-dataset/"
     checkpoint_name: "best_lente_bijie.pth"
     history_file: "history_lente_bijie.json"
     optical_bands: [0, 1, 2]           # RGB TripleSat
@@ -62,3 +69,28 @@ datasets:
     pos_weight_mode: "pixels"          # real foreground-pixel statistics
     rgb_channels: [0, 1, 2]
     rgb_stretch: "clip"
+    # D2FLS comparison (LENTE_compare.py) — ADATTA ai parametri con cui hai
+    # addestrato D2FLS su Bijie, altrimenti il checkpoint non si carica.
+    d2fls:
+      checkpoint_name: "best_d2fls_bijie.pth"
+      opt_channels: [0, 1, 2]          # RGB -> 3ch (metti [0,1,2,3] se includevi lo slope)
+      dem_channel: 4
+      in_channels_opt: 3
+      img_size: 128                    # cambia in 256 se hai allenato D2FLS-bijie a 256
+
+# ------------------------------------------------------------
+# Training congiunto L4S + Bijie su UN solo modello (LENTE_multi_*).
+# Non e' un dataset singolo: combina i due blocchi `datasets:` qui sopra,
+# riusando per ciascuno root / optical_bands / pos_weight_mode / load_size.
+# Lo stem di input viene instradato per dominio (12ch L4S, 3ch Bijie); il
+# resto (encoder SAM2, adapter, mask decoder, early-guidance) e' condiviso.
+# ------------------------------------------------------------
+multi:
+  checkpoint_name: "best_lente_multi.pth"
+  history_file: "history_lente_multi.json"
+  members: ["l4s", "bijie"]          # quali blocchi datasets: combinare
+  # Normalizzazione per-dataset dell'ottico prima dello stem condiviso.
+  # "zscore" = standardizzazione per-canale con statistiche del train di
+  # ciascun dominio (consigliata, allinea le scale L4S vs Bijie).
+  # "none"   = nessuna normalizzazione aggiuntiva.
+  optical_norm: "zscore"

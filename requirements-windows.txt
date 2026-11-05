@@ -1,0 +1,25 @@
+# ---- nucleo: addestramento LENTE ----
+numpy==2.2.6
+scipy==1.15.3
+scikit-learn==1.7.2
+pillow==12.1.0
+opencv-python==4.13.0.92
+matplotlib==3.10.9
+tqdm==4.67.3
+PyYAML==6.0.3
+h5py==3.15.1
+tifffile==2025.5.10
+transformers==5.2.0
+timm==1.0.24
+segmentation-models-pytorch==0.5.0
+albumentations==2.0.8
+huggingface-hub==1.4.1
+ultralytics==8.4.131
+
+# ---- extra: acquisizione dati e Sen12 ----
+rasterio==1.4.4
+pyproj==3.7.1
+xarray==2025.6.1
+# geemap   NON INSTALLATO qui
+# earthengine-api   NON INSTALLATO qui
+# ollama   NON INSTALLATO qui

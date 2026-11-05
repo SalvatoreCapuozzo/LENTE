@@ -1,0 +1,686 @@
+# ============================================================
+# Unified LENTE config — works for both L4S and Bijie.
+# The launcher (LENTE_run.py) picks a dataset; load_config() merges
+# the `common` block with the chosen `datasets:` block into a flat dict.
+# ============================================================
+
+# Default dataset if you run a script directly without choosing.
+active_dataset: bijie        # "l4s" or "bijie"
+
+# ------------------------------------------------------------
+# Shared across both datasets
+# ------------------------------------------------------------
+common:
+  device: "cuda"
+  random_seed: 42
+  target_size: 1024
+  sam_ckpt_path: "facebook/sam2-hiera-tiny"
+
+  # Training
+  epochs: 100
+  patience: 15
+  batch_size: 8
+  learning_rate: 1.0e-5
+  weight_decay: 1.0e-4
+
+  # Split & augmentation
+  val_fraction: 0.20
+  test_fraction: 0.20
+  aug_copies: 2
+
+  # Model
+  # Dimensione del bottleneck degli Adapter (Linear dim->N->dim su ogni blocco
+  # di attenzione del vision encoder).
+  #
+  # Perche' e' salito da 64 a 256. Misurato: con 64 gli adapter sono 0.61M
+  # parametri contro i 27.20M CONGELATI dell'encoder, cioe' il 2.2% — e sono
+  # l'unica cosa che puo' adattare le feature al dominio multispettrale, visto
+  # che l'86% dei parametri allenabili sta nel mask_decoder, che e' a valle.
+  # In tutti i run la IoU di VALIDAZIONE e' rimasta SOPRA quella di training
+  # (es. ep38: train 0.520, val 0.542): zero sovradattamento dopo 70 epoche e'
+  # il sintomo classico di capacita' inutilizzata, non di generalizzazione.
+  #
+  # Costo di 256: +1.81M parametri (+5.6% del modello), +22MB di checkpoint,
+  # VRAM praticamente invariata. Gli adapter passano da 0.61M a 2.42M, 4x.
+  #
+  # IL SEGNALE DA GUARDARE non e' la IoU ma il divario train/val: se con piu'
+  # capacita' il train inizia a SUPERARE il val, allora il collo di bottiglia
+  # era questo e ha senso salire (adapter sugli MLP, poi encoder parziale). Se
+  # il train resta sotto, non era la capacita': chiudere questo asse.
+  #
+  # ATTENZIONE: cambia la forma dei tensori. Un checkpoint salvato con 64 non
+  # si carica con 256 (e viceversa) — `boxhead_test` usa strict=True e lo
+  # rifiuta correttamente. Tenere lo stesso valore fra training e test.
+  adapter_dim: 256
+
+  # DOVE agganciare gli Adapter dentro l'encoder.
+  #   attn  solo dopo l'attenzione  <- comportamento STORICO, default.
+  #         Tutti i run L4S fatti finora sono questo.
+  #   mlp   solo dopo l'MLP (Pfeiffer)
+  #   both  entrambi (Houlsby, lo schema originale)
+  #
+  # Hiera-tiny ha 12 blocchi: con "attn" 12 punti di adattamento, con "both" 24.
+  # I 12 MLP erano rimasti NON adattati, e l'MLP e' dove avviene la maggior
+  # parte della trasformazione dentro un blocco transformer.
+  #
+  # Su Sen12Landslides ingrandire gli adapter a parita' di punti ha PEGGIORATO
+  # (test micro F1 0.5386 -> 0.4973): la capacita' non e' la leva, quindi la
+  # posizione e' l'ipotesi rimasta.
+  adapter_where: "attn"
+
+  # ----------------------------------------------------------
+  # LoRA sull'encoder congelato
+  # ----------------------------------------------------------
+  # Aggiornamento a rango basso dei Linear dell'attenzione: W x + (alpha/r) B A x
+  #
+  # DIFFERENZA DAGLI ADAPTER. L'Adapter e' un ramo residuo sull'USCITA del
+  # blocco: ritocca feature gia' calcolate. LoRA corregge i PESI con cui
+  # l'attenzione viene calcolata — cambia cosa il blocco guarda. Su un encoder
+  # pre-addestrato su video RGB naturali e riusato su 12 bande Sentinel, il
+  # disallineamento sta li'.
+  #
+  # Costo: per un Linear d->3d (il qkv) sono 4*r*d parametri. Con r=8 sono ~0.2M
+  # su tutto l'encoder, DIECI VOLTE MENO dei 2.42M di adapter attuali.
+  #
+  # B parte da zero, quindi all'inizio il modello e' identico e puo' solo
+  # migliorare.
+  #
+  # 0 = disattivato. Per l'ablazione "solo LoRA" mettere adapter_dim: 0.
+  lora_rank: 0
+  lora_alpha: 16.0
+
+  # Prompt dato al mask decoder di SAM2. SAM2 e' un segmentatore PROMPTABLE:
+  # senza prompt non sa "cosa" segmentare, quindi la scelta qui decide che
+  # problema si sta risolvendo davvero.
+  #
+  #   "gt_box"    -> bounding box della ground truth. E' la risposta travestita
+  #                  da input: non esiste in produzione (monitoring_agent deve
+  #                  fabbricarla con proposals.py, che genera una distribuzione
+  #                  di box DIVERSA da quella vista in training) e non e'
+  #                  confrontabile con i segmentatori densi della letteratura.
+  #                  Legittimo solo se l'inquadramento e' annotazione assistita.
+  #   "image_box" -> box = intera immagine. Informazione nulla (identico per ogni
+  #                  campione), ma il decoder resta nel regime "promptato" del
+  #                  pretraining invece di trovarsi un prompt vuoto.
+  #   "none"      -> nessun prompt. transformers inserisce un punto vuoto con
+  #                  label -1 (`not_a_point_embed`): il modello deve localizzare
+  #                  da solo. E' il regime dei baseline densi.
+  #   "clf_box"   -> il box lo decide un CLASSIFICATORE binario congelato, nella
+  #                  stessa forma che aveva "gt_box": sentinella [0,0,10,10]
+  #                  dove dice "vuota", box a tutta immagine dove dice "c'e' una
+  #                  frana". MISURATO: con la sentinella della ground truth il
+  #                  modello prendeva vuote = 1.0000 ESATTO su 306 patch, ed era
+  #                  il 76% del vantaggio di quel regime — ma nasceva
+  #                  dall'etichetta, quindi era un leak. Qui la stessa
+  #                  distinzione viene da un modello addestrato, disponibile
+  #                  anche a inferenza. Richiede `clf_weights`.
+  #   "yolo_box"  -> il box lo propone un YOLO CONGELATO che gira dentro il loop
+  #                  di training, sull'immagine gia' aumentata. E' un INDIZIO,
+  #                  non la risposta: viene da un modello, e' disponibile anche
+  #                  a inferenza, e non guarda mai la maschera del campione.
+  #                  Dove il detector non propone nulla il campione va in regime
+  #                  prompt-free (niente box finto: sarebbe un bias, perche'
+  #                  finirebbe sia sulle patch vuote sia sui positivi mancati).
+  #                  Richiede `yolo_weights`.
+  #
+  # Prompt-free e' anche un PREREQUISITO del Mean Teacher: sul dominio target
+  # non etichettato non c'e' maschera, quindi non c'e' box, quindi il teacher
+  # non avrebbe alcun prompt con cui girare.
+  #
+  # Override per-dataset possibile: una chiave `prompt_source` dentro un blocco
+  # di `datasets:` vince su questa (load_config fa merge common -> dataset).
+  prompt_source: "yolo_box"
+
+  # Degrado gaussiano dei box GT usati come prompt in TRAINING (frazione del
+  # lato del box). Attivo solo con prompt_source: "gt_box"; validazione e test
+  # non vengono mai degradati.
+  # Serve per la cascata YOLO -> SAM2: LENTE va addestrato su box imprecisi
+  # quanto quelli che il detector produrra' davvero, altrimenti a inferenza si
+  # trova una distribuzione di prompt mai vista. Il valore va MISURATO con
+  # `python LENTE_yolo_cascade.py calibrate`, non scelto a occhio.
+  # 0 = disattivato (box GT perfetti, che e' il regime dell'oracolo).
+  prompt_jitter: 0.0
+
+  # Probabilita' di togliere DEL TUTTO il box durante il training (solo con
+  # prompt_source: "gt_box"). Validazione e test non sono toccati.
+  #
+  # Serve alla cascata YOLO -> SAM2. Misurato sul val: YOLO propone un box solo
+  # sul 52% delle patch positive (conf 0.25). Senza dropout il modello sa
+  # lavorare SOLO col prompt, quindi sul 48% restante la cascata restituirebbe
+  # una maschera vuota su patch positive — IoU 0 secco. Il conto dice che anche
+  # con segmentazione PERFETTA dentro i box la cascata si fermerebbe a 0.559,
+  # sotto il prompt-free attuale (0.6066).
+  #
+  # Con il dropout un SOLO modello impara entrambi i regimi:
+  #   YOLO propone un box  ->  segmenta dentro il box
+  #   YOLO tace            ->  segmenta senza prompt
+  # Cosi' la cascata non puo' fare peggio del prompt-free: e' instradamento,
+  # non scommessa.
+  #
+  # 0.5 = meta' dei batch senza prompt, che rispecchia il ~50% di recall del
+  # detector. Se il recall di YOLO sale, si puo' abbassare.
+  # A 0 con prompt_source "yolo_box": li' il dropout avviene GIA' in modo
+  # naturale, sui campioni dove il detector non propone nulla (misurato: succede
+  # sul 27% dei positivi a conf 0.10). Aggiungerne altro artificialmente
+  # sarebbe doppio. Serve solo nel regime "gt_box", dove i box ci sono sempre.
+  prompt_dropout: 0.0
+
+  # Visualization (0 = all test images, or an integer)
+  viz_num_samples: 0
+
+  # ----------------------------------------------------------
+  # Prompt box APPRESO (modi "boxhead" / "boxhead_ema")
+  # ----------------------------------------------------------
+  # Il box smette di venire dalla ground truth e viene predetto da una testa
+  # addestrata, che a inferenza gira da sola. Il GT box resta come TARGET di
+  # regressione — legittimo, e' quello che fa ogni object detector.
+  # Architettura della testa:
+  #   "heatmap" -> mappa di calore + soft-argmax: il box si legge dai momenti
+  #                (centroide e dispersione) di una distribuzione spaziale.
+  #                Mantiene la geometria fino alla fine.
+  #   "gap"     -> prima versione: global average pooling + Linear(->4).
+  #                Il pooling medio cancella il "dove": misurato su L4S, box L1
+  #                ferma a ~0.19 dopo 20 epoche. Tenuta per confronto.
+  boxhead_type: "heatmap"
+  # Branch separata che somma un prior di terreno ai logit della heatmap
+  # ("le frane stanno sui pendii"). Solo per boxhead_type: "heatmap".
+  # E' una branch PROPRIA, non la DSDF, cosi' l'ablazione no_dfds resta pulita.
+  boxhead_terrain_prior: true
+  # Quale canale di prompt riceve SAM2. Sparse e denso sono INDIPENDENTI nel
+  # prompt encoder, quindi non si escludono a vicenda.
+  #   "box"   -> solo il rettangolo (due token d'angolo). Misurato su L4S:
+  #              la testa si ferma a box L1 ~0.205 con area 0.75 contro 0.391
+  #              del vero, perche' _bbox_from_mask prende il rettangolo
+  #              dell'UNIONE e su frane sparse il bersaglio e' quasi tutta
+  #              l'immagine. Nessun rettangolo puo' descrivere tre macchie.
+  #   "dense" -> la heatmap intera via `input_masks`, il canale che SAM2 usava
+  #              per il raffinamento iterativo e che finora era sempre rimasto
+  #              al default `no_mask_embed`. Gestisce le frane multiple per
+  #              costruzione. Richiede boxhead_type: "heatmap".
+  #   "both"  -> entrambi.
+  # In modalita' "dense" lo scheduled sampling viene disattivato da solo: dare
+  # la maschera GT come prompt farebbe coincidere input e bersaglio.
+  boxhead_prompt: "dense"
+  boxhead_width: 32          # canali base della CNN della testa
+  boxhead_work_size: 128     # risoluzione a cui gira la testa (nativa L4S)
+  # LR della sola testa di box, in un param group separato. La testa e' una CNN
+  # da ZERO: con learning_rate=1e-5 (tarato su pesi pretrained) non si muove.
+  boxhead_lr: 1.0e-3
+  # Peso della L1 sul box (solo sui positivi).
+  # 5.0 era tarato quando il box ERA il prompt. Con boxhead_prompt "dense" il
+  # box e' solo un'ancora sui momenti della mappa, e a 5.0 monopolizzava l'84%
+  # della loss (misurato): 0.5 lo lascia utile senza farlo dominare.
+  boxhead_lambda_box: 0.5
+  boxhead_lambda_obj: 0.5    # peso della BCE di objectness
+  # Deep supervision sulla heatmap: BCE cella per cella contro la maschera GT
+  # ridotta alla griglia (16x16). Senza, la mappa impara solo dai 4 momenti del
+  # box e da un gradiente molto smorzato; con, ogni cella ha un bersaglio
+  # esplicito ed e' cosi' che la mappa impara a rappresentare frane MULTIPLE.
+  # 0 = disattivata (richiede comunque boxhead_type: "heatmap").
+  # ATTENZIONE: alzandolo troppo la testa diventa lei il segmentatore e SAM2 si
+  # riduce a ricopiarne la mappa. Partire da 1.0.
+  boxhead_lambda_map: 1.0
+  # Epoche di scheduled sampling: si parte usando il box GT come prompt e si
+  # scende linearmente a quello predetto. Serve solo a far partire il decoder,
+  # perche' nelle prime epoche il box predetto e' rumore. A 0 = subito autonomo.
+  boxhead_teacher_forcing_epochs: 5
+  # Rumore sui box GT usati come prompt durante lo scheduled sampling, come
+  # frazione del lato del box. SAM e' stato addestrato con box rumorosi: senza
+  # questo il decoder vede solo box perfetti finche' p_gt > 0 e poi di colpo
+  # box imprecisi, cioe' una distribuzione mai vista. 0 = disattivato.
+  boxhead_gt_jitter: 0.1
+
+  # ----------------------------------------------------------
+  # EMA dei pesi (solo nel modo "boxhead_ema")
+  # ----------------------------------------------------------
+  # Media esponenziale dei pesi (Polyak): si valuta e si salva la media, non
+  # l'ultimo punto raggiunto. NON e' ancora il Mean Teacher — quello richiede un
+  # dominio target non etichettato e la consistency loss.
+  ema_decay: 0.999           # orizzonte ~1/(1-decay) = 1000 step
+  ema_warmup: 1000           # step in cui il decay effettivo sale a regime
+
+  # ----------------------------------------------------------
+  # Cascata YOLO -> SAM2  (LENTE_yolo_cascade.py)
+  # ----------------------------------------------------------
+  # Un detector propone N box, LENTE segmenta dentro ciascuno, le maschere si
+  # uniscono. Risolve per costruzione il limite contro cui si sono fermati tutti
+  # gli esperimenti sul prompt interno: UN rettangolo non puo' descrivere tre
+  # frane in tre angoli. Misurato su due frane distanti in una patch 128x128,
+  # il box dell'unione copre il 67.3% dell'immagine, i due box separati il 4.9%.
+  #
+  # Il GT box resta SUPERVISIONE (YOLO si addestra su quelli, come ogni
+  # detector) e non INPUT a inferenza: a test time i box li produce YOLO.
+
+  # Quali bande compongono l'immagine a 3 canali data al detector.
+  # NON e' rgb_channels (che serve alla visualizzazione): il detector deve
+  # VEDERE le frane, non essere gradevole all'occhio.
+  #
+  # Misurato con conf 0.25 usando l'RGB vero ([3,2,1] = B4,B3,B2): copertura in
+  # pixel 0.687, cioe' il 31% dei pixel-frana fuori da ogni box. Il recall e' il
+  # vincolo della cascata, e l'RGB e' il sospetto numero uno: una frana fresca e'
+  # TERRENO NUDO, e cio' che la separa dalla vegetazione sta nel vicino
+  # infrarosso — la vegetazione riflette moltissimo nel NIR, il suolo nudo quasi
+  # niente. In RGB e' marrone su verde scuro; in falso colore e' rosso acceso su
+  # nero.
+  #
+  #   [7, 3, 2]  = B8, B4, B3   falso colore NIR-Rosso-Verde (consigliato)
+  #   [3, 2, 1]  = B4, B3, B2   RGB vero (il baseline gia' misurato)
+  #   [11, 7, 3] = B12, B8, B4  SWIR-NIR-Rosso, ancora piu' sensibile al suolo nudo
+  #
+  # Cambiando questo va rifatto `export` e riaddestrato YOLO.
+  #
+  # NON e' limitato a 3 canali ne' alle bande ottiche: `_make_stack` pesca dallo
+  # stack COMPLETO, terreno compreso (12 = slope, 13 = DEM su L4S).
+  #   3 canali  -> export in PNG, pesi COCO usati cosi' come sono
+  #   N canali  -> export in .npy + `channels: N` nel data.yaml, e lo stem del
+  #                detector viene allargato 3 -> N tenendo i pesi COCO sui primi
+  #                tre (vedi _expand_yolo_stem). Richiede rgb_stretch: "minmax",
+  #                perche' "clip" taglierebbe a [0,1] e azzererebbe lo slope.
+  #
+  #   [7, 3, 2]         falso colore NIR   -> box IoU 0.684  (train-5, 11m@512)
+  #   [3, 2, 1]         RGB vero           -> box IoU 0.680  (train-7, 11m@512, a meta')
+  #   [0..13]           tutto lo stack     -> box IoU 0.674  (train-6, 11m@512)
+  #   [0..13]           tutto lo stack     -> box IoU 0.658  (train-8, 26m@960)
+  #   [3,2,1,12,13]     RGB + slope + DEM  -> box IoU ?      (train-10, 26m@960)
+  #
+  # ESITO: cinque configurazioni, box IoU fra 0.658 e 0.684, con recall e
+  # precision perfettamente inverse fra loro — cioe' lo STESSO detector in punti
+  # diversi della stessa curva. Ne' le bande ne' l'architettura ne' la
+  # risoluzione alzano la curva. Il migliore e' anche il piu' economico.
+  # ATTENZIONE: questa chiave e yolo_imgsz sono GLOBALI ma ogni checkpoint ha il
+  # suo regime — calibrare train-N con le bande di train-M da' numeri falsi
+  # senza nessun errore (successo con la figura di train-7).
+  yolo_bands: [7, 3, 2]
+  # Modello e risoluzione: yolo11m a 512 e non yolo11s a 256. Misurato con
+  # 11s@256: recall fermo a ~0.38 e copertura in pixel 0.687. A 512 la testa
+  # P3 (stride 8) risolve celle da 2 pixel nativi invece di 4 — per oggetti
+  # che in media occupano il 4% della patch e' la differenza fra assegnabile
+  # e non assegnabile. L'11m aggiunge capacita' (20M vs 9M) e a 512 su una
+  # 3090 gira comodo con batch 16.
+  # Pesi del detector gia' addestrato, usati da prompt_source: "yolo_box".
+  # Attenzione: ultralytics NON sovrascrive, incrementa la cartella — controlla
+  # con `ls -d runs/detect/*/` quale sia l'ultima.
+  yolo_weights: "runs/detect/train-5/weights/best.pt"
+
+  yolo_model: "yolo11m.pt"
+  # 512 su patch native 128. Misurato: a 960 (yolo26m, 14 canali) la box IoU
+  # SCENDE a 0.658 e il training costa 5.6 ore invece di 1.1. La griglia piu'
+  # fine non aiuta perche' il limite non e' la risoluzione della detection.
+  yolo_imgsz: 512
+  # Dataset piccolo, convergenza lenta: 300 epoche col patience=50 di
+  # ultralytics che ferma da solo quando smette di migliorare.
+  yolo_epochs: 300
+  # Abbassato da 16: a 960 i pixel sono 3.5x quelli di 512, e con 14 canali
+  # anche lo stem pesa di piu'. Se non va in OOM si puo' risalire a 8.
+  yolo_batch: 4
+  # LR abbassato rispetto allo 0.01 di default di ultralytics. In modalita'
+  # "union" i bersagli sono radi (UNO per immagine, nessuno sul 41% delle patch:
+  # 6-11 istanze per batch da 16) e col default il training DIVERGE — misurato:
+  # mAP50 0.255 all'epoca 1 con il warmup attivo, poi crollo a 0.008 entro
+  # l'epoca 5 con la box_loss in salita. Warmup allungato per la stessa ragione.
+  yolo_lr0: 0.002
+  yolo_warmup_epochs: 5.0
+  # COSA deve predire il detector.
+  #
+  #   "union"     -> UN box per patch, quello dell'unione di tutte le frane.
+  #                  E' esattamente il prompt con cui LENTE ha fatto 0.7501,
+  #                  quindi il checkpoint gt_box esistente vale gia' e quel
+  #                  numero e' il soffitto MISURATO della cascata.
+  #                  Divisione dei ruoli: YOLO dice "frane, piu' o meno qui";
+  #                  SAM2 dice "esattamente questi pixel". Un box che e' un
+  #                  PROMPT non deve delimitare l'oggetto, deve indicare la
+  #                  regione — e che SAM2 sappia segmentare piu' frane dentro un
+  #                  riquadro largo e' proprio cio' che 0.7501 dimostra.
+  #                  Bonus: il bersaglio passa dall'1-2% al ~42% dell'immagine,
+  #                  quindi sparisce il problema degli oggetti piccoli.
+  #   "component" -> N box, uno per componente connessa. Richiede di
+  #                  RIADDESTRARE LENTE (i box valgono ~1-2% contro il ~42%
+  #                  dell'unione: 32x di scarto di scala, regime mai visto dal
+  #                  segmentatore) e anche di cambiare il bersaglio della loss.
+  #                  Tenuta per confronto.
+  yolo_box_mode: "union"
+
+  # Area minima (in pixel) perche' una patch/componente generi un box.
+  #
+  # MISURATO sul train esportato con min_area 4: 7903 box, mediana 66px, e
+  # il 49% dei box sta sotto 64px pesando appena il 4.6% dell'area totale.
+  # Cioe' META' dei bersagli erano frammenti sotto gli 8x8 — non trovabili da
+  # nessun detector, ma comunque conteggiati nella loss e nel recall. Meta' del
+  # segnale di addestramento andava sprecata su obiettivi impossibili, ed e'
+  # anche il motivo per cui il recall per istanza (0.28-0.40) era molto piu'
+  # basso della copertura in pixel (0.60-0.69).
+  #
+  # QUEL RAGIONAMENTO VALE SOLO IN MODALITA' "component". In "union" il filtro
+  # non serve e fa danno: una patch con 50 pixel di frana sparsi ha comunque un
+  # box dell'unione grande e perfettamente trovabile. Con 64 venivano esclusi
+  # ~400 positivi su 2231 (il 18%), che senza box avrebbero maschera vuota su
+  # patch positiva, cioe' IoU 0 per costruzione: circa -0.03 sul risultato.
+  # A 4 restano fuori solo 14 patch con meno di 4 pixel di frana (2217 box su
+  # 2231 positivi). Se torni a "component", rimetti 64.
+  yolo_min_area: 4
+  # Inferenza: soglia di confidenza e numero massimo di box per patch.
+  # conf alza la precision e abbassa il recall; con la metrica attuale un box
+  # spurio su una patch negativa la fa crollare da 1.0 a 0.0, quindi conviene
+  # tararlo sul VAL con `calibrate` e non lasciarlo al default.
+  # MISURATO sul val con il detector finale (mAP50 0.6085, picco a epoca 152):
+  #
+  #   conf   copertura  recall  precision  IoU box
+  #   0.25     0.885     0.563    0.922      0.735
+  #   0.10     0.956     0.728    0.813      0.684
+  #
+  # Scelto 0.10. A conf piu' bassa i box spuri sui negativi aumentano (precision
+  # 0.813 contro 0.922), ma LENTE si addestra NELLO STESSO REGIME: quei box
+  # spuri li vede in training con maschera vuota come bersaglio, e impara a
+  # ignorarli. La precision persa se la riprende il segmentatore.
+  # Il recall invece no: un positivo senza box resta senza indizio, e quello e'
+  # guadagno mancato che nessuno recupera. 0.563 -> 0.728 significa passare dal
+  # 56% al 73% di positivi che ricevono un prompt.
+  yolo_conf: 0.10
+  # In modalita' "union" c'e' UN box per patch, quindi 1 e' il valore corretto:
+  # si tiene solo la proposta piu' confidente. In "component" alzarlo a ~10.
+  yolo_max_det: 1
+
+  # ----------------------------------------------------------
+  # Su QUALE canale i box di YOLO raggiungono il mask decoder
+  # ----------------------------------------------------------
+  #   "box"   -> `input_boxes`: il rettangolo piu' confidente, due token
+  #              d'angolo. E' uniforme sul batch, quindi chi non ha proposte
+  #              richiede una seconda forward (_forward_split).
+  #   "dense" -> `input_masks`: TUTTE le proposte dipinte in una mappa, ciascuna
+  #              con la propria confidenza come intensita'.
+  #
+  # Perche' "dense". Tre cose che il canale sparse non puo' fare:
+  #   1. PIU' BOX. Un rettangolo non descrive tre frane in tre angoli — e' il
+  #      limite contro cui si sono fermati tutti gli esperimenti sul prompt.
+  #      Nella mappa ci stanno tutte.
+  #   2. NIENTE SOGLIA. Il box non viene tenuto o buttato da un `conf >` secco:
+  #      dipinge la propria confidenza, e il modello impara da solo quanto
+  #      fidarsi di una proposta debole. E' la soglia, ma continua e appresa.
+  #      Per questo `yolo_dense_conf` va tenuta BASSA: non serve filtrare.
+  #   3. BANDA. Il canale sparse sono 2 token accodati alla sequenza; il denso
+  #      viene sommato pixel per pixel all'image embedding, cioe' tocca tutte le
+  #      ~4096 posizioni della griglia.
+  # Bonus: sparisce _forward_split e il suo ~15% di costo, perche' un campione
+  # senza proposte riceve una mappa costante, che e' neutra.
+  #
+  # MISURATO col canale sparse (train-5, union): a conf 0.10 la cascata ha reso
+  # 0.5918 contro 0.5942 prompt-free, cioe' rumore. Col canale denso invece
+  # 0.5942 di media su due run contro 0.5823 prompt-free: +0.012, il primo
+  # guadagno ripetibile su questo asse. Per questo il default e' "dense".
+  yolo_prompt: "dense"
+  # Usati SOLO da yolo_prompt: "dense". La soglia serve solo a non dipingere
+  # rumore puro; la selezione vera la fa il modello attraverso l'intensita'.
+  yolo_dense_conf: 0.05
+  yolo_dense_max_det: 10
+
+  # ----------------------------------------------------------
+  # Raffinamento iterativo (feedback del modello su se stesso)
+  # ----------------------------------------------------------
+  # Quante volte il modello rilegge la PROPRIA maschera come `input_masks` e la
+  # corregge. 0 = una forward sola (comportamento storico), 1 = due forward.
+  #
+  # Perche' ha senso proprio qui. `mask_embed` non e' un canale generico: SAM lo
+  # ha addestrato per rileggere le proprie maschere nel raffinamento iterativo.
+  # Dandogli i rettangoli rasterizzati di YOLO lo usiamo FUORI dalla
+  # distribuzione su cui e' nato — e infatti l'unico adattamento fra le due era
+  # un singolo scalare (`k`, misurato: sale a 1.02-1.10, quindi il modello vuole
+  # piu' segnale di quanto gliene diamo). Al secondo passaggio riceve invece
+  # esattamente cio' che si aspetta: una maschera morbida prodotta da SAM.
+  # Le due mappe si sommano, ciascuna con la sua scala appresa, quindi il
+  # suggerimento del detector non viene perso al secondo giro.
+  #
+  # Costo: una forward in piu' per passaggio (~2x il tempo di epoca).
+  # ATTENZIONE: training e test devono usare lo STESSO valore, altrimenti si
+  # valuta il modello a meta' del lavoro per cui e' stato addestrato.
+  #
+  # MISURATO: 1 passaggio porta il Test IoU da 0.5942 a 0.6251 (+0.031) e
+  # soprattutto alza `con frana` da 0.3532 a 0.4910 — il canale denso da solo
+  # aveva PEGGIORATO la segmentazione delle frane, il secondo passaggio la
+  # recupera e la supera. Per questo il default e' 1.
+  refine_passes: 1
+  # Peso della loss sui passaggi INTERMEDI. Senza (0), il primo passaggio non ha
+  # piu' nessun incentivo a essere buono da solo e degenera in un abbozzo.
+  refine_lambda: 0.5
+
+  # ----------------------------------------------------------
+  # Prompt encoder addestrabile
+  # ----------------------------------------------------------
+  # Il prompt encoder e' un modulo DIVERSO dal mask_decoder (che e' scongelato
+  # da sempre) e per default resta congelato. Dentro c'e' `mask_embed`: la pila
+  # di conv 1->4->16->256 che traduce `input_masks` nello spazio dell'image
+  # embedding, cioe' l'unico punto da cui la mappa di YOLO entra nel modello.
+  #
+  # MISURATO: prompt_encoder = 6.220 parametri in tutto, di cui mask_embed 4.684
+  # (lo 0.07% dei 6.69M addestrabili). Il sovradattamento non e' un rischio.
+  # Il motivo per provarlo: quei pesi sanno leggere le maschere MORBIDE di SAM,
+  # non i nostri rettangoli rasterizzati. Il motivo per aspettarsi poco: con un
+  # bottleneck a 4 canali la capacita' di riconciliare due distribuzioni e'
+  # minima.
+  # ----------------------------------------------------------
+  # Termine di regione della loss  (BCE + lambda_dice x regione)
+  # ----------------------------------------------------------
+  #   "dice"    -> come sempre
+  #   "tversky" -> Dice sbilanciato: beta>0.5 punisce i FALSI NEGATIVI piu' dei
+  #                falsi positivi. Gli oggetti piccoli si perdono per omissione,
+  #                quindi beta alto li recupera. Dice = Tversky con beta 0.5.
+  #   "lovasz"  -> surrogato convesso diretto della IoU (la metrica vera).
+  loss_region: "dice"
+  loss_tversky_beta: 0.7
+  # LA LEVA SULLE FRANE PICCOLE. false = il punteggio si accumula su tutto il
+  # batch, quindi e' dominato dall'AREA: una frana da 5000 pixel conta 50 volte
+  # una da 100. true = si calcola per immagine e poi si media, quindi ogni patch
+  # pesa uguale a prescindere da quanto e' grande la frana che contiene.
+  #
+  # ATTENZIONE: spinge il modello ad accendere PIU' pixel, quindi peggiora le
+  # patch VUOTE — che valgono il 40% del punteggio (MISURATO: 306 su 759, e su
+  # una patch vuota la IoU e' 1.0 o 0.0, niente vie di mezzo). Va accoppiato a
+  # un gate sulle vuote, non usato al posto suo.
+  # MISURATO: sparse + per-immagine = 0.6310 di Test IoU, contro ~0.5823 stimato
+  # con la stessa configurazione e il Dice sul batch. Circa +0.049, la leva piu'
+  # grande del progetto — quattro volte il canale denso (+0.012) e piu' del
+  # raffinamento (+0.031). Ha senso: attacca il 60% del punteggio (le patch con
+  # frana), mentre tutto il lavoro sul prompt lavorava sui margini.
+  loss_per_image: true
+  lambda_dice: 0.3
+
+  # ----------------------------------------------------------
+  # Enfasi sulle frane PICCOLE, per componente connessa
+  # ----------------------------------------------------------
+  # Peso di ogni pixel di frana:   clamp( (ref / area_frana) ** gamma, 1, max )
+  # Lo sfondo resta a 1.
+  #
+  # Perche' serve anche con loss_per_image. Quello fa pesare uguale ogni PATCH,
+  # ma dentro una patch con due frane — una da 5000 pixel e una da 50 — la
+  # grande domina lo stesso, 100 a 1. Qui il conteggio scende all'OGGETTO.
+  #
+  # MISURATO sull'export del dataset: il 49% dei bersagli sta sotto i 64 pixel e
+  # pesa appena il 4.6% dell'area totale. Meta' delle frane, un ventesimo del
+  # gradiente.
+  #
+  # gamma  0 = disattivato. 0.5 = una frana da 50 px pesa 3.2 volte una da 500.
+  #        1.0 e' aggressivo (10x nello stesso confronto) e rischia di far
+  #        accendere pixel ovunque, peggiorando le patch vuote.
+  # ref    area di riferimento IN PIXEL alla risoluzione della loss (128x128 con
+  #        target_size 512, cioe' la nativa). Sopra `ref` il peso e' 1.
+  # max    tetto: evita che una frana da 3 pixel prenda un peso da 400.
+  #
+  # ATTENZIONE: come tutte le leve sui positivi, spinge il modello ad accendere
+  # piu' pixel e quindi PEGGIORA le patch vuote. Va usato insieme al gate o al
+  # prompt del classificatore, che quelle le coprono.
+  loss_small_gamma: 0.0
+  loss_small_ref: 500.0
+  loss_small_max: 10.0
+
+  # ----------------------------------------------------------
+  # SAM addestrato solo sulle patch CON frana
+  # ----------------------------------------------------------
+  # Oggi il 41% dei batch sono patch senza nessun bersaglio, dove il gradiente
+  # dice solo "non accendere niente da nessuna parte": capacita' spesa per
+  # imparare a TACERE. E' un lavoro che un classificatore binario (ResNet34,
+  # 15 minuti) fa meglio, e che a valle il gate rifa comunque.
+  #
+  # Con true, SAM diventa un modello puro "data una frana, disegnala" e tutta la
+  # capacita' va sulla colonna `con frana` — l'unica meta' del problema mai
+  # attaccata (MISURATA: 0.4910 sul modello migliore).
+  #
+  # RISCHIO: non impara piu' a sopprimere i falsi positivi, quindi sulle patch
+  # vuote che il gate lascia passare (misurato: 5.6%, ~17 su 306) produrra'
+  # spazzatura. Il guadagno sui positivi deve superare quel costo.
+  #
+  # Effetti collaterali gestiti automaticamente: pos_weight viene RICALCOLATO
+  # sul nuovo insieme, e il checkpoint viene selezionato sulla IoU dei soli
+  # positivi invece che sul totale (che sarebbe zavorrato dalle vuote, ormai
+  # affare del gate).
+  train_positives_only: false
+
+  # ----------------------------------------------------------
+  # Su quale numero salvare il checkpoint migliore
+  # ----------------------------------------------------------
+  #   "totale" -> la IoU media su tutte le patch (comportamento storico)
+  #   "frane"  -> solo le patch che una frana ce l'hanno
+  #   "micro"  -> la IoU micro (pixel accumulati su tutto il val). E' l'unica
+  #               confrontabile con la letteratura, quindi se il numero che
+  #               vuoi riportare e' quello, seleziona su quello: la macro
+  #               premia il riconoscere le patch vuote, la micro non gliene da'
+  #               credito, e ottimizzare l'una scegliendo sull'altra e'
+  #               disallineato. MISURATO: clf_box e' 2o sulla macro (0.6402) e
+  #               ULTIMO sulla micro (0.5389).
+  #
+  # Perche' "frane" ha senso da quando esiste il gate. Il totale mescola due
+  # compiti: sulle patch VUOTE (il 40% del test) il punteggio e' 1.0 o 0.0 secco
+  # — c'e' o non c'e' — mentre su quelle con frana misura i contorni. Ma le
+  # vuote a inferenza le sistema il GATE, che e' esterno al modello e vale +0.03
+  # su qualunque checkpoint.
+  #
+  # Selezionare sul totale premia quindi un modello TIMIDO, penalizzandolo per
+  # l'unica cosa che poi correggiamo comunque. Il rischio e' concreto con
+  # `loss_per_image: true`, che alza `frane` e abbassa `vuote` di proposito: il
+  # totale si appiattisce e si salva l'epoca sbagliata, senza modo di
+  # recuperare l'altra (si tiene solo il migliore).
+  #
+  # Con train_positives_only: true e' forzato a "frane" comunque — quel modello
+  # non ha mai visto una patch vuota e il suo totale non significa nulla.
+  select_on: "frane"
+
+  # ----------------------------------------------------------
+  # Segnale di PRESENZA dal classificatore, dentro il prompt
+  # ----------------------------------------------------------
+  # Il classificatore binario (LENTE_classifier.py) da' a SAM la probabilita'
+  # p(frana) come mappa UNIFORME sul canale denso, con una scala appresa propria.
+  #
+  # E' la ricostruzione legittima di un meccanismo gia' misurato: nel regime
+  # `gt_box`, su una patch vuota `_bbox_from_mask` restituiva sempre la costante
+  # [0,0,10,10], il modello imparava "questo pattern -> non disegnare niente" e
+  # prendeva vuote = 1.0000 ESATTO su 306 patch. Il 76% del vantaggio di quel
+  # regime veniva da li' — ma era un leak, perche' il segnale nasceva dalla
+  # ground truth. Qui la stessa informazione viene da un modello addestrato.
+  #
+  # DIFFERENZA DAL GATE ESTERNO: il gate e' tutto-o-niente e su una patch
+  # positiva che il classificatore sbaglia perde TUTTO (misurato: costa 0.0245
+  # su `con frana`). Qui il segnale e' graduale — a p=0.3 il modello disegna
+  # poco e prudente invece di perdere tutto — ed e' dentro il grafo, quindi SAM
+  # impara a combinarlo con la propria evidenza.
+  #
+  # Non richiede YOLO: `input_masks` accetta i tre contributi (box, presenza,
+  # raffinamento) in modo indipendente, ciascuno con la sua scala.
+  clf_prompt: false
+  clf_weights: "best_clf_l4s.pth"
+  # Soglia con cui il classificatore decide quale box dare, in regime
+  # prompt_source: "clf_box".
+  #   p <  soglia  ->  sentinella [0,0,10,10]  "qui non c'e' niente"
+  #   p >= soglia  ->  box a tutta immagine    "qui c'e' qualcosa"
+  # 0.30 e' il punto scelto sul validation quando il classificatore era usato
+  # come gate: azzerava il 90.5% delle patch vuote sacrificando l'8.6% di quelle
+  # con frana. Va ritarato se cambia il classificatore.
+  clf_box_threshold: 0.30
+
+  unfreeze_prompt_encoder: false
+  # LR dedicato: 1e-3 (le teste nuove) distruggerebbe pesi pretrained; 1e-5
+  # (tarato su 27M di parametri) su 4.684 non li muove in venti epoche.
+  prompt_encoder_lr: 1.0e-4
+
+# ------------------------------------------------------------
+# Per-dataset settings
+# ------------------------------------------------------------
+datasets:
+
+  l4s:
+    dataset_type: "h5"                 # selects the H5 (Landslide4Sense) loader
+    dataset_root: "/datadrive/LENTE/SAM3/SAM2/LandSlide4Sense"
+    # Risoluzione a cui SAM2 lavora, override del 1024 di `common`.
+    # Le patch L4S sono 128x128 native e il mask decoder emette a image_size/4:
+    #   1024 -> maschere 256x256, cioe' 8x di upsample in ingresso e una IoU
+    #           calcolata su pixel INTERPOLATI, non misurati. 4:02 a epoca.
+    #    512 -> maschere 128x128 = la griglia nativa esatta. La supervisione
+    #           torna sul dato vero e l'epoca costa un quarto (~1:00).
+    #    256 -> maschere 64x64, sotto il nativo: si perderebbe risoluzione vera.
+    # Il numero e' usato in due punti che devono restare agganciati: i loop
+    # interpolano le immagini a target_size e `build_model` costruisce SAM2 alla
+    # stessa dimensione (vedi _build_sam2_image_config in LENTE_utils.py).
+    # ATTENZIONE: un checkpoint addestrato a 1024 NON e' confrontabile con uno a
+    # 512 senza rimisurare — usa nomi di checkpoint distinti (--checkpoint).
+    target_size: 512
+    checkpoint_name: "best_lente_l4s.pth"
+    history_file: "history_lente_l4s.json"
+    optical_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # 12 Sentinel-2 bands
+    terrain_bands: [12, 13]            # Slope + DEM
+    # Media e deviazione per canale dello stack a 14, sul TRAIN (400 patch,
+    # 936.400 pixel per banda), misurate con statistiche_ingresso.py. Servono
+    # agli encoder preaddestrati su dati STANDARDIZZATI — TerraCodec, Prithvi —
+    # che L4S non e': media ~1, deviazione ~0.45, tutto >= 0. Con --norm-ingresso
+    # l'affine d'ingresso parte da (x - media) / dev invece che dall'identita'.
+    band_mean: [0.9311, 0.9284, 0.9620, 0.9685, 1.0298, 1.0505, 1.0449,
+                1.0553, 1.1693, 1.1656, 1.0612, 1.0491, 1.2225, 1.5900]
+    band_std:  [0.1392, 0.2185, 0.3151, 0.5672, 0.4508, 0.4383, 0.4583,
+                0.4877, 0.5048, 0.6556, 0.5244, 0.6531, 0.6794, 1.0910]
+    load_size: null                    # H5 patches already 128x128, no resize needed
+    # misurato: rapporto reale 42.14 | sqrt 6.49 | heuristic 3.87 (10.9x troppo basso)
+    pos_weight_mode: "sqrt"
+    rgb_channels: [3, 2, 1]            # B4,B3,B2 for natural color
+    rgb_stretch: "minmax"
+    # D2FLS comparison (LENTE_compare.py): come mappare lo stack LENTE sull'input D2FLS
+    d2fls:
+      checkpoint_name: "best_d2fls_base_ms_in22k.pth"
+      opt_channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # 12 S2 + slope -> 13ch
+      dem_channel: 13
+      in_channels_opt: 13
+      img_size: 128                    # patch L4S 128x128
+
+  bijie:
+    dataset_type: "png"                # selects the PNG (Bijie) loader
+    dataset_root: "/datadrive/LENTE/Bijie_dataset/Bijie-landslide-dataset"
+    checkpoint_name: "best_lente_bijie.pth"
+    history_file: "history_lente_bijie.json"
+    optical_bands: [0, 1, 2]           # RGB TripleSat
+    terrain_bands: [3, 4]              # slope (derived from DEM) + DEM
+    load_size: 256                     # variable-size crops -> uniform load size
+    # misurato: rapporto reale 34.56 | sqrt 5.88 | heuristic 9.29
+    # (il crop e' centrato sulla frana, ma i pixel-frana restano il 2.81% del totale)
+    pos_weight_mode: "sqrt"
+    rgb_channels: [0, 1, 2]
+    rgb_stretch: "clip"
+    # D2FLS comparison (LENTE_compare.py) — ADATTA ai parametri con cui hai
+    # addestrato D2FLS su Bijie, altrimenti il checkpoint non si carica.
+    d2fls:
+      checkpoint_name: "best_d2fls_bijie.pth"
+      opt_channels: [0, 1, 2]          # RGB -> 3ch (metti [0,1,2,3] se includevi lo slope)
+      dem_channel: 4
+      in_channels_opt: 3
+      img_size: 128                    # cambia in 256 se hai allenato D2FLS-bijie a 256
+
+# ------------------------------------------------------------
+# Training congiunto L4S + Bijie su UN solo modello (LENTE_multi_*).
+# Non e' un dataset singolo: combina i due blocchi `datasets:` qui sopra,
+# riusando per ciascuno root / optical_bands / pos_weight_mode / load_size.
+# Lo stem di input viene instradato per dominio (12ch L4S, 3ch Bijie); il
+# resto (encoder SAM2, adapter, mask decoder, early-guidance) e' condiviso.
+# ------------------------------------------------------------
+multi:
+  checkpoint_name: "best_lente_multi.pth"
+  history_file: "history_lente_multi.json"
+  members: ["l4s", "bijie"]          # quali blocchi datasets: combinare
+  # Normalizzazione per-dataset dell'ottico prima dello stem condiviso.
+  # "zscore" = standardizzazione per-canale con statistiche del train di
+  # ciascun dominio (consigliata, allinea le scale L4S vs Bijie).
+  # "none"   = nessuna normalizzazione aggiuntiva.
+  optical_norm: "zscore"
