@@ -31,6 +31,37 @@ def _resolve(root: Path, p):
 
 
 def build_adapter(cfg: dict, split: str, root: Path, max_items=None):
+    a = _build_adapter(cfg, split, root, max_items)
+    if a is not None:
+        # eval_only_entries: classes of the novel atlas that a dataset contains. Their
+        # objects train the waste mask only; they are never described, never count as
+        # seen, and at test time they are named / retrieved from their text entry.
+        a.eval_only = frozenset(cfg.get("eval_only_entries") or [])
+    return a
+
+
+def subsample_adapter(a, n: int, seed: int = 0) -> list[int]:
+    """Keep a seeded random subset of n items (E10: n labelled images of a new site). Returns the
+    kept indices of the full split, for the record."""
+    import random
+    idx = list(range(len(a.items)))
+    random.Random(seed).shuffle(idx)
+    keep = sorted(idx[:n])
+    a.items = [a.items[i] for i in keep]
+    a.entries_per_item = [a.entries_per_item[i] for i in keep]
+    a._select(keep)
+    return keep
+
+
+def trained_entries(adapters) -> set[str]:
+    """Atlas entries a model is supervised on: present in the data, not eval-only."""
+    out: set[str] = set()
+    for a in adapters:
+        out |= a.entries_present() - getattr(a, "eval_only", frozenset())
+    return out
+
+
+def _build_adapter(cfg: dict, split: str, root: Path, max_items=None):
     c = copy.deepcopy(cfg)
     if "splits" in c:
         if split not in c["splits"]:
@@ -47,12 +78,14 @@ def build_adapter(cfg: dict, split: str, root: Path, max_items=None):
                            class_map=c.get("class_map"), surroundings=c.get("surroundings"),
                            scene_map=c.get("scene_map"), image_ids=ids,
                            has_instances=c.get("has_instances", True),
-                           depth_dir=_resolve(root, c.get("depth_dir")), max_items=max_items)
+                           depth_dir=_resolve(root, c.get("depth_dir")), max_items=max_items,
+                           negatives_dir=_resolve(root, c.get("negatives_dir")))
     if t == "voc":
         return VocAdapter(c["name"], _resolve(root, c["root"]), c.get("split_file", split),
                           waste_values=c.get("waste_values", (1,)), entry=c.get("entry"),
                           surroundings=c.get("surroundings"), instance_dir=c.get("instance_dir", "SegmentationObject"),
-                          depth_dir=c.get("depth_dir"), image_ext=c.get("image_ext", ".jpg"), max_items=max_items)
+                          depth_dir=c.get("depth_dir"), image_ext=c.get("image_ext", ".jpg"), max_items=max_items,
+                          waste_colors=c.get("waste_colors"))
     if t == "masks":
         ids = None
         if "split" in c:
@@ -79,7 +112,7 @@ def build_split(ds_cfgs: list[dict], names: list[str] | None, split: str, atlas:
         a = build_adapter(cfg, split, root, max_items=max_items)
         if a is None:
             continue
-        unknown = sorted(e for e in a.entries_present() if e not in atlas)
+        unknown = sorted(e for e in a.entries_present() if e not in atlas and e not in a.eval_only)
         if unknown:
             msg = f"[{cfg['name']}] entries not in the atlas: {unknown}"
             if strict:

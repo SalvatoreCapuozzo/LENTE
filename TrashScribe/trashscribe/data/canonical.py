@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
-import albumentations as A
 import cv2
 import numpy as np
 import torch
@@ -76,6 +75,7 @@ def build_augment(cfg: dict | None) -> A.Compose:
     """Geometric + photometric augmentation at model resolution. The photometric
     part is deliberately strong: camera and illumination are what differ most
     between waste datasets and must not be what the model keys on."""
+    import albumentations as A   # training only: the edge runtime must not need it
     cfg = cfg or {}
     s = float(cfg.get("strength", 1.0))
     t = [
@@ -95,6 +95,30 @@ def build_augment(cfg: dict | None) -> A.Compose:
     return A.Compose(t)
 
 
+def pack_instances(insts: list[np.ndarray]) -> tuple[list[np.ndarray], list[tuple[int, int]]]:
+    """Instance masks -> a few uint16 label layers (objects that do not overlap
+    share a layer) and, per instance, its (layer, label). Geometric augmentation
+    then warps K layers instead of N masks; with nearest-neighbour resampling this
+    is exact, since "pixel == label" commutes with it. BePLi has up to 363 objects
+    per image: N full-resolution masks per sample exhausted host RAM."""
+    layers: list[np.ndarray] = []
+    n_lab: list[int] = []
+    where: list[tuple[int, int]] = []
+    for m in insts:
+        mb = m.astype(bool)
+        for k, L in enumerate(layers):
+            if not L[mb].any():
+                break
+        else:
+            layers.append(np.zeros(m.shape, np.uint16))
+            n_lab.append(0)
+            k = len(layers) - 1
+        n_lab[k] += 1
+        layers[k][mb] = n_lab[k]
+        where.append((k, n_lab[k]))
+    return layers, where
+
+
 class Canonicalizer:
     """RawSample at model resolution -> dict of tensors."""
 
@@ -112,15 +136,22 @@ class Canonicalizer:
         img, waste, valid, insts, ents, depth = s.image, s.waste_mask(), s.valid, s.instances, s.entries, s.depth
         if valid is None:
             valid = np.ones(img.shape[:2], np.uint8)
+        layers, where = pack_instances(insts)
+        del insts
         if self.aug is not None:
-            masks = [waste, valid] + list(insts) + ([depth] if depth is not None else [])
+            masks = [waste, valid] + layers + ([depth] if depth is not None else [])
             out = self.aug(image=img, masks=masks)
             img, masks = out["image"], out["masks"]
             waste, valid = masks[0], masks[1]
-            insts = masks[2:2 + len(insts)]
+            layers = list(masks[2:2 + len(layers)])
             depth = masks[-1].astype(np.float32) if depth is not None else None
-        keep = [i for i, m in enumerate(insts) if int(m.sum()) >= self.min_area]
-        insts = [insts[i].astype(np.uint8) for i in keep]
+        n_lab = [0] * len(layers)
+        for k, lab in where:
+            n_lab[k] = max(n_lab[k], lab)
+        # minlength from the labels assigned, not from L.max(): augmentation can push
+        # an object out of the frame
+        counts = [np.bincount(L.ravel(), minlength=n + 1) for L, n in zip(layers, n_lab)]
+        keep = [i for i, (k, lab) in enumerate(where) if int(counts[k][lab]) >= self.min_area]
         ents = [ents[i] for i in keep]
 
         S, S4 = self.size, self.size // 4
@@ -128,9 +159,9 @@ class Canonicalizer:
         valid_t = (valid > 0) & (waste != IGNORE)
         waste_t = (waste == 1)
 
-        if insts:
-            stack = np.stack(insts).astype(np.float32)
-            inst4 = np.stack([cv2.resize(m, (S4, S4), interpolation=cv2.INTER_AREA) for m in stack])
+        if keep:      # one object at a time: a float32 stack of all masks at S x S took >1 GB on BePLi
+            inst4 = np.stack([cv2.resize((layers[where[i][0]] == where[i][1]).astype(np.float32), (S4, S4),
+                                         interpolation=cv2.INTER_AREA) for i in keep])
         else:
             inst4 = np.zeros((0, S4, S4), np.float32)
         contour = np.zeros((S4, S4), np.float32)

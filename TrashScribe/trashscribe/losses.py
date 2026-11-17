@@ -40,19 +40,31 @@ def field_layout(schema: Schema):
     return [(schema.slices[f.name], f.kind, f.scope) for f in schema.fields]
 
 
-def descriptor_loss(logits, tgt, msk, layout, scopes=("intrinsic", "contextual")):
+def descriptor_loss(logits, tgt, msk, layout, scopes=("intrinsic", "contextual"), drop=None):
     """Soft-target CE for single-valued fields, BCE for multi-valued ones. A field
     contributes only for objects where it is described (mask), so a blank field
-    is never read as a negative."""
+    is never read as a negative.
+
+    drop: optional bool tensor over values that are never supervised (held-out
+    descriptor values, E7). Their column leaves the loss entirely: no positive, no
+    negative, not even as a competitor in a single-valued softmax; objects whose
+    single-valued target is a dropped value do not supervise that field."""
     total = logits.new_zeros(())
     count = 0
     for sl, kind, scope in layout:
         if scope not in scopes:
             continue
         m = msk[:, sl].all(1)
+        dr = drop[sl] if drop is not None else None
+        if dr is not None and kind == "single" and bool(dr.any()):
+            m = m & (tgt[:, sl][:, dr].sum(1) == 0)
         if not bool(m.any()):
             continue
         lg, t = logits[m, sl].float(), tgt[m, sl]
+        if dr is not None and bool(dr.any()):
+            if bool(dr.all()):
+                continue
+            lg, t = lg[:, ~dr], t[:, ~dr]
         if kind == "single":
             l = -(t * F.log_softmax(lg, -1)).sum(-1)
         else:

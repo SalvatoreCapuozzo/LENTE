@@ -1,0 +1,10 @@
+# E7: open-vocabulary DESCRIPTION. Three descriptor values are never supervised: no positive, no
+# negative (their column leaves the loss), and they do not steer model selection. At test they are
+# scored from their phrase alone, through the same text re-projection as every other value.
+# Same recipe as E4 otherwise. Compare per-value AP with E4 (supervised) and raw CLIP crops:
+#   python scripts/posthoc.py values runs/e4_heldout_classes runs/e7_heldout_values --values ...
+_base_: e4_heldout_classes.yaml
+run_name: e7_heldout_values
+train:
+  loss:
+    unsupervised_values: ["material: metal", "material: expanded polystyrene foam", "surface: crumpled or wrinkled"]

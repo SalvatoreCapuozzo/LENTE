@@ -1,0 +1,23 @@
+# E9 (15 Nov): SAM 3 as an OFFLINE TEACHER at a new site. The leave-one-out model for bepli (E3) is
+# fine-tuned on the four labelled datasets plus the bepli TRAIN images labelled by SAM 3
+# (scripts/baseline_zeroshot.py --detector sam3 --tasks pseudo; the real labels are never used).
+# Selection: the four validation sets plus the SAM 3-labelled bepli val images. Test: bepli test, real
+# labels. Deployment reading: frames collected at the new site, labelled once by SAM 3 on a
+# workstation; SAM 3 never runs on the device.
+_base_: e3_lodo_bepli.yaml
+run_name: e9_sam3_bepli
+extra_datasets:
+  - name: bepli_sam3
+    type: masks
+    surroundings: sand, soil or pebbles
+    ignore_value: 255
+    splits:
+      train: {images_dir: _pseudo/sam3/bepli/train/images, masks_dir: _pseudo/sam3/bepli/train/masks}
+      val:   {images_dir: _pseudo/sam3/bepli/val/images, masks_dir: _pseudo/sam3/bepli/val/masks}
+train_datasets: [taco, zerowaste, uavvaste, mju, bepli_sam3]
+val_datasets: [taco, zerowaste, uavvaste, mju, bepli_sam3]
+test_datasets: [bepli]
+train:
+  init_from: runs/e3_lodo_bepli/best.pt
+  epochs: 12
+  patience: 4

@@ -38,6 +38,23 @@ class DescriptorField(nn.Module):
         return self.proj(h), h
 
 
+class ClipField(nn.Module):
+    """Dense distilled CLIP field (E8, 15 Nov): per-pixel vectors in the CLIP joint
+    IMAGE space, trained so that their mask-pooled average matches what frozen CLIP
+    ViT-B/16 sees in the object's crop. At inference it names / retrieves any phrase
+    like CLIP on crops would, but from the same single forward pass (no crop loop).
+    Separate from the descriptor field: the two targets (text-side descriptor phrases,
+    image-side CLIP embedding) live in different cones of the joint space."""
+
+    def __init__(self, hidden=256, out_dim=512):
+        super().__init__()
+        self.net = nn.Sequential(nn.Conv2d(hidden, hidden, 3, padding=1), _gn(hidden), nn.GELU(),
+                                 nn.Conv2d(hidden, out_dim, 1))
+
+    def forward(self, h8):
+        return self.net(h8)
+
+
 class ContourHead(nn.Module):
     """Object-boundary logits at stride 4, used to split touching waste objects
     into instances without per-object decoder calls (cheap on the edge)."""

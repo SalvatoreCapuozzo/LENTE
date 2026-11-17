@@ -1,0 +1,35 @@
+# Atlas entries for the BePLi v2 classes (beach plastic litter, Japan; Song et al.)
+# that have no counterpart in atlas/taco.yaml. The other BePLi classes are
+# aliases of TACO entries (class_map in configs/datasets.yaml):
+#   pet_bottle -> Clear plastic bottle      other_bottle -> Other plastic bottle
+#   rope, other_string -> Rope & strings    styrene_foam -> Styrofoam piece
+#   other_container -> Other plastic container    others -> Other plastic
+#   fishing_net -> Fishing net (atlas/novel_field_classes.yaml): EVAL-ONLY, its
+#                  objects train as plain waste and are never described or named.
+# Every BePLi object is plastic lying on a beach, usually weathered by sun and sea.
+name: bepli
+entries:
+  - name: Plastic bag
+    descriptors: {material: [plastic], rigidity: flexible and deformable, shape: a thin film or bag,
+                  surface: [crumpled or wrinkled, dirty or weathered], size: larger than a hand}
+    prose: "a crumpled, weathered plastic bag washed up on a beach"
+    stream: plastic and metal packaging
+  - name: Plastic box or case
+    descriptors: {material: [plastic], rigidity: rigid, optics: opaque, shape: box-shaped,
+                  surface: [dirty or weathered]}
+    prose: "a rigid box-shaped plastic case or container"
+    stream: plastic and metal packaging
+  - name: Buoy or float
+    descriptors: {material: [plastic], rigidity: rigid, optics: opaque, surface: [dirty or weathered],
+                  size: larger than a hand}
+    prose: "a round or cylindrical hard plastic fishing buoy or float"
+    stream: residual
+  - name: Other fishing gear
+    descriptors: {material: [plastic], surface: [dirty or weathered]}
+    prose: "a piece of plastic fishing gear such as a line, a trap or a fish box"
+    stream: residual
+  - name: Plastic fragment
+    descriptors: {material: [plastic], rigidity: rigid, optics: opaque, shape: a small irregular fragment,
+                  surface: [dirty or weathered], state: torn or broken into pieces, size: "tiny, smaller than a finger"}
+    prose: "a small weathered fragment of hard plastic lying on the sand"
+    stream: plastic and metal packaging

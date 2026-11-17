@@ -1,0 +1,23 @@
+# E9 (15 Nov): SAM 3 as an OFFLINE TEACHER at a new site. The leave-one-out model for uavvaste (E3) is
+# fine-tuned on the four labelled datasets plus the uavvaste TRAIN images labelled by SAM 3
+# (scripts/baseline_zeroshot.py --detector sam3 --tasks pseudo; the real labels are never used).
+# Selection: the four validation sets plus the SAM 3-labelled uavvaste val images. Test: uavvaste test, real
+# labels. Deployment reading: frames collected at the new site, labelled once by SAM 3 on a
+# workstation; SAM 3 never runs on the device.
+_base_: e3_lodo_uavvaste.yaml
+run_name: e9_sam3_uavvaste
+extra_datasets:
+  - name: uavvaste_sam3
+    type: masks
+    surroundings: a seen-from-above aerial view of the ground
+    ignore_value: 255
+    splits:
+      train: {images_dir: _pseudo/sam3/uavvaste/train/images, masks_dir: _pseudo/sam3/uavvaste/train/masks}
+      val:   {images_dir: _pseudo/sam3/uavvaste/val/images, masks_dir: _pseudo/sam3/uavvaste/val/masks}
+train_datasets: [taco, zerowaste, mju, bepli, uavvaste_sam3]
+val_datasets: [taco, zerowaste, mju, bepli, uavvaste_sam3]
+test_datasets: [uavvaste]
+train:
+  init_from: runs/e3_lodo_uavvaste/best.pt
+  epochs: 12
+  patience: 4

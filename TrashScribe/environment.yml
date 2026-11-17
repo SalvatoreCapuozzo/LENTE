@@ -1,0 +1,38 @@
+# TrashScribe on an NVIDIA workstation (CUDA 13 driver). Exact versions of the GPU grid
+# started on 5 Nov 2026 (RESULTS.md); change them only between experiment series.
+#   conda env create -f environment.yml && conda activate trashscribe
+#   python -m pytest tests -q
+# Other CUDA drivers: replace "cu130" below with the tag that matches (e.g. cu124).
+name: trashscribe
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12.3
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu130
+      - torch==2.9.1+cu130
+      - torchvision==0.24.1+cu130
+      - transformers==5.2.0
+      - huggingface-hub==1.4.1
+      - tokenizers==0.22.2
+      - safetensors==0.8.0rc0
+      - numpy==1.26.4
+      - scipy==1.17.1
+      - scikit-learn==1.7.2
+      - joblib==1.5.2
+      - threadpoolctl==3.6.0
+      - opencv-python-headless==4.10.0.84
+      - albumentations==2.0.8
+      - albucore==0.0.24
+      - stringzilla==4.6.2
+      - simsimd==6.5.16
+      - pydantic==2.10.3
+      - pycocotools==2.0.8
+      - PyYAML==6.0.3
+      - pillow==10.4.0
+      - onnx==1.20.1
+      - onnxruntime==1.23.2
+      - onnxsim==0.8.1
+      - pytest==9.1.1
+      - gdown==6.5.1

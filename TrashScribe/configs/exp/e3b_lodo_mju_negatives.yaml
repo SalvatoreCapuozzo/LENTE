@@ -1,0 +1,15 @@
+# E3b (15 Nov): is the MJU-Waste LODO failure (people and furniture segmented as waste, IoU 0.055)
+# fixed by generic waste-free negatives? Identical to E3-MJU plus COCO val2017 indoor scenes with
+# people and no waste-like category (scripts/make_negatives.py; nothing from MJU-Waste). They enter
+# training (all-background masks; transplant can paste waste objects onto them) and model selection.
+_base_: e3_lodo_mju.yaml
+run_name: e3b_lodo_mju_negatives
+extra_datasets:
+  - name: coco_neg
+    type: masks
+    images_dir: coco_neg/images
+    masks_dir: coco_neg/masks
+    split: {seed: 42, fractions: {train: 0.8, val: 0.2}}
+train_datasets: [taco, zerowaste, uavvaste, bepli, coco_neg]
+val_datasets: [taco, zerowaste, uavvaste, bepli, coco_neg]
+test_datasets: [mju]

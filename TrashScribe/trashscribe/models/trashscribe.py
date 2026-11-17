@@ -24,7 +24,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .backbone import Sam2Backbone, TinyBackbone
-from .heads import (ContourHead, DescriptorField, EnvironmentAdversary, FieldScorer,
+from .heads import (ClipField, ContourHead, DescriptorField, EnvironmentAdversary, FieldScorer,
                     GeometryGuidance, TextReprojection)
 
 
@@ -46,6 +46,8 @@ class ModelConfig:
     ring_cells: int = 3
     adversary: bool = True
     closed_vocab_probe: bool = False        # reference only: one weight vector per descriptor
+    clip_field: bool = False                # E8: dense head distilled from CLIP crop embeddings
+    clip_dim: int = 512
 
 
 class TrashScribe(nn.Module):
@@ -64,6 +66,7 @@ class TrashScribe(nn.Module):
         self.geometry = GeometryGuidance() if cfg.geometry else None
         self.desc = DescriptorField(text_dim, cfg.desc_hidden)
         self.contour = ContourHead(cfg.desc_hidden)
+        self.clip_field = ClipField(cfg.desc_hidden, cfg.clip_dim) if cfg.clip_field else None
         self.text_proj = TextReprojection(text_dim, cfg.text_rank)
         self.scorer = FieldScorer(n_fields)
         self.adversary = EnvironmentAdversary(text_dim, n_env) if (cfg.adversary and n_env > 1) else None
@@ -103,7 +106,10 @@ class TrashScribe(nn.Module):
         waste, iou = self.backbone.decode(feats)
         dmap, h8 = self.desc(feats)
         contour = self.contour(feats[0], h8)
-        return {"waste": waste, "contour": contour, "desc": dmap, "iou": iou}
+        out = {"waste": waste, "contour": contour, "desc": dmap, "iou": iou}
+        if self.clip_field is not None:
+            out["clip"] = self.clip_field(h8)
+        return out
 
     def score(self, z_int: torch.Tensor, z_ctx: torch.Tensor | None = None) -> torch.Tensor:
         """(N, V) logits; contextual fields read from the ring embedding."""

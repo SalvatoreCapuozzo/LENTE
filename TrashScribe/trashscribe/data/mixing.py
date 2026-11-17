@@ -121,11 +121,17 @@ class MultiDataset(Dataset):
             s = transplant(s, bg, self.rng, **self.tcfg)
         return self.canon(s)
 
-    def sample_weights(self, alpha: float = 0.5) -> torch.Tensor:
+    def sample_weights(self, alpha: float = 0.5, share: dict | None = None) -> torch.Tensor:
         """Temperature sampling over datasets: P(d) ∝ N_d^alpha (alpha=0 uniform over
-        datasets, 1 proportional to size); uniform within each dataset."""
+        datasets, 1 proportional to size); uniform within each dataset. share: fixed
+        probabilities for named datasets (E10: the few labelled images of a new site),
+        the other datasets keep their relative weights in the remaining mass."""
         sizes = np.array([len(a) for a in self.adapters], dtype=np.float64)
         pd = sizes ** alpha / (sizes ** alpha).sum()
+        if share:
+            fixed = np.array([float(share.get(a.name, 0.0)) for a in self.adapters])
+            free = fixed == 0
+            pd = np.where(free, pd / max(pd[free].sum(), 1e-12) * (1 - fixed.sum()), fixed)
         return torch.tensor([pd[ai] / sizes[ai] for ai, _ in self.index], dtype=torch.double)
 
     def dataset_of(self, k: int) -> str:

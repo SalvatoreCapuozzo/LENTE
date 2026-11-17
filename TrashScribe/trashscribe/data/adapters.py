@@ -9,6 +9,7 @@ unmapped classes loudly instead of guessing.
 """
 from __future__ import annotations
 
+import pickle
 import random
 from pathlib import Path
 
@@ -28,6 +29,18 @@ def _read_rgb(path: Path) -> np.ndarray:
 def _components(waste: np.ndarray, min_area=16) -> list[np.ndarray]:
     n, lab = cv2.connectedComponents((waste == 1).astype(np.uint8))
     return [(lab == i).astype(np.uint8) for i in range(1, n) if (lab == i).sum() >= min_area]
+
+
+def _ann_to_mask(seg, h: int, w: int) -> np.ndarray:
+    """pycocotools COCO.annToMask without the COCO object (same branches)."""
+    from pycocotools import mask as mask_utils
+    if isinstance(seg, list):
+        rle = mask_utils.merge(mask_utils.frPyObjects(seg, h, w))
+    elif isinstance(seg["counts"], list):
+        rle = mask_utils.frPyObjects(seg, h, w)
+    else:
+        rle = seg
+    return mask_utils.decode(rle)
 
 
 def split_ids(ids: list, fractions: dict, seed: int) -> dict:
@@ -56,7 +69,11 @@ class BaseAdapter:
         dropped = len(self.items) - len(keep)
         self.items = [self.items[i] for i in keep]
         self.entries_per_item = [self.entries_per_item[i] for i in keep]
+        self._select(keep)
         return dropped
+
+    def _select(self, keep: list[int]):
+        """Keep only these item indices in any per-item store (subclasses)."""
 
     def entries_present(self) -> set[str]:
         return set().union(*self.entries_per_item) if self.entries_per_item else set()
@@ -64,11 +81,15 @@ class BaseAdapter:
 
 class CocoAdapter(BaseAdapter):
     def __init__(self, name, images_dir, ann_file, class_map=None, surroundings=None, scene_map=None,
-                 image_ids=None, has_instances=True, depth_dir=None, max_items=None):
+                 image_ids=None, has_instances=True, depth_dir=None, max_items=None, negatives_dir=None):
         from pycocotools.coco import COCO
         self.name = name
         self.images_dir = Path(images_dir)
         self.depth_dir = Path(depth_dir) if depth_dir else None
+        # negatives_dir: <stem>.png, > 0 = pixel known NOT to be waste. When given, only
+        # annotated objects and these pixels are supervised / scored; every other
+        # pixel is ignored (ZeroWaste-f: paper is waste but unannotated, the belt is not)
+        self.negatives_dir = Path(negatives_dir) if negatives_dir else None
         self.coco = COCO(str(ann_file))
         self.surroundings, self.has_instances = surroundings, has_instances
         cats = {c["id"]: c["name"] for c in self.coco.loadCats(self.coco.getCatIds())}
@@ -90,37 +111,66 @@ class CocoAdapter(BaseAdapter):
             ids = ids[:max_items]
         self.items = ids
         self.entries_per_item = []
+        # imgToAnns, not loadAnns(getAnnIds(...)): TACO repeats annotation ids, and the
+        # id lookup then returns another image's object (wrong mask and wrong class)
         for iid in ids:
-            anns = self.coco.loadAnns(self.coco.getAnnIds(imgIds=iid, iscrowd=None))
+            anns = self.coco.imgToAnns[iid]
             self.entries_per_item.append({self.cat2entry[a["category_id"]] for a in anns} - {None})
+        # Compact per-image store, then the COCO object is dropped. DataLoader workers
+        # are forks: reading Python dicts bumps refcounts, which copies the touched pages
+        # into each worker, so every worker slowly grew a private copy of all
+        # annotations (70k+ on BePLi). Bytes inside one numpy buffer are never copied.
+        blobs, meta, off = [], [], 0
+        for iid in ids:
+            info = self.coco.imgs[iid]
+            anns = [(a["category_id"], int(a.get("iscrowd", 0)), a["segmentation"]) for a in self.coco.imgToAnns[iid]]
+            b = pickle.dumps(anns, protocol=pickle.HIGHEST_PROTOCOL)
+            blobs.append(b)
+            meta.append((off, len(b), info["height"], info["width"]))
+            off += len(b)
+        self._buf = np.frombuffer(b"".join(blobs), np.uint8)
+        self._meta = np.array(meta, np.int64).reshape(-1, 4)
+        self._files = np.array([self.coco.imgs[iid]["file_name"] for iid in ids], dtype=np.str_)
+        del self.coco
+
+    def _select(self, keep):
+        self._meta, self._files = self._meta[keep], self._files[keep]
 
     def load(self, i) -> RawSample:
         iid = self.items[i]
-        info = self.coco.loadImgs(iid)[0]
-        img = _read_rgb(self.images_dir / info["file_name"])
+        off, n, ah, aw = (int(v) for v in self._meta[i])
+        anns = pickle.loads(self._buf[off:off + n].tobytes())
+        fname = str(self._files[i])
+        img = _read_rgb(self.images_dir / fname)
         h, w = img.shape[:2]
-        anns = self.coco.loadAnns(self.coco.getAnnIds(imgIds=iid, iscrowd=None))
         insts, ents = [], []
         waste = np.zeros((h, w), np.uint8)
-        for a in anns:
-            if info["height"] != h or info["width"] != w:
+        for cat, crowd, seg in anns:
+            m = _ann_to_mask(seg, ah, aw)
+            if ah != h or aw != w:
                 # EXIF-rotated files: annotation frame differs from decoded frame
-                m = cv2.resize(self.coco.annToMask(a), (w, h), interpolation=cv2.INTER_NEAREST)
-            else:
-                m = self.coco.annToMask(a)
-            if a.get("iscrowd", 0):
+                m = cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST)
+            if crowd:
                 waste[m > 0] = 1
                 continue
             insts.append(m.astype(np.uint8))
-            ents.append(self.cat2entry.get(a["category_id"]))
+            ents.append(self.cat2entry.get(cat))
             waste[m > 0] = 1
+        valid = None
+        if self.negatives_dir is not None:
+            neg = cv2.imread(str(self.negatives_dir / (Path(fname).stem + ".png")), cv2.IMREAD_GRAYSCALE)
+            if neg is None:
+                raise FileNotFoundError(self.negatives_dir / (Path(fname).stem + ".png"))
+            if neg.shape != (h, w):
+                neg = cv2.resize(neg, (w, h), interpolation=cv2.INTER_NEAREST)
+            valid = ((neg > 0) | (waste > 0)).astype(np.uint8)
         depth = None
         if self.depth_dir is not None:
-            p = self.depth_dir / (Path(info["file_name"]).with_suffix(".npy"))
+            p = self.depth_dir / (Path(fname).with_suffix(".npy"))
             if p.exists():
                 depth = np.load(p).astype(np.float32)
         return RawSample(image=img, instances=insts, entries=ents, dataset=self.name, image_id=str(iid),
-                         waste=waste, surroundings=self.scene.get(iid, self.surroundings),
+                         waste=waste, valid=valid, surroundings=self.scene.get(iid, self.surroundings),
                          has_instances=self.has_instances, depth=depth)
 
 
@@ -129,9 +179,14 @@ class VocAdapter(BaseAdapter):
     optional depth folder, ImageSets/Segmentation/<split>.txt."""
 
     def __init__(self, name, root, split, waste_values=(1,), ignore_value=255, entry=None, surroundings=None,
-                 instance_dir="SegmentationObject", depth_dir=None, image_ext=".jpg", max_items=None):
+                 instance_dir="SegmentationObject", depth_dir=None, image_ext=".jpg", max_items=None,
+                 waste_colors=None):
         self.name, self.root = name, Path(root)
         self.waste_values, self.ignore_value = set(waste_values), ignore_value
+        # waste_colors: decode the class PNG by palette COLOUR (VOC semantics) instead of
+        # raw index. MJU-Waste stores waste as index 0 drawn (128,0,0), background as
+        # index 1 drawn black, and empty images with an all-black palette.
+        self.waste_colors = np.array(waste_colors, np.uint8) if waste_colors else None
         self.entry, self.surroundings = entry, surroundings
         self.inst_dir = self.root / instance_dir if instance_dir and (self.root / instance_dir).exists() else None
         self.depth_dir = self.root / depth_dir if depth_dir else None
@@ -143,9 +198,16 @@ class VocAdapter(BaseAdapter):
     def load(self, i) -> RawSample:
         sid = self.items[i]
         img = _read_rgb(self.root / "JPEGImages" / f"{sid}{self.image_ext}")
-        cls = np.array(_read_palette(self.root / "SegmentationClass" / f"{sid}.png"))
-        waste = np.where(np.isin(cls, list(self.waste_values)), 1, 0).astype(np.uint8)
-        waste[cls == self.ignore_value] = IGNORE
+        pim = _read_palette(self.root / "SegmentationClass" / f"{sid}.png")
+        cls = np.array(pim)
+        if self.waste_colors is not None:
+            rgb = np.array(pim.convert("RGB"))
+            waste = (rgb[:, :, None, :] == self.waste_colors[None, None]).all(-1).any(-1).astype(np.uint8)
+            if self.ignore_value is not None:
+                waste[(rgb == (224, 224, 192)).all(-1)] = IGNORE       # VOC "void" colour
+        else:
+            waste = np.where(np.isin(cls, list(self.waste_values)), 1, 0).astype(np.uint8)
+            waste[cls == self.ignore_value] = IGNORE
         if self.inst_dir is not None:
             obj = np.array(_read_palette(self.inst_dir / f"{sid}.png"))
             ids = [v for v in np.unique(obj) if v not in (0, self.ignore_value)]

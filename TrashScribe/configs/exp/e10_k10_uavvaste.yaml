@@ -1,0 +1,16 @@
+# E10 (17 Nov): how many labelled images of a new site does the 34 M edge model need to match or beat
+# SAM 3 (848 M, zero-shot) there? The leave-one-out model for uavvaste (E3) is fine-tuned with 10 labelled
+# uavvaste TRAIN images (seeded random subset, list written to the run folder) drawn for 25 % of the training
+# samples, plus the four other datasets. Fixed short schedule, the LAST epoch is tested: validation holds
+# only the four other datasets, so it cannot choose an epoch for the new site. Test: uavvaste test, real labels.
+_base_: e3_lodo_uavvaste.yaml
+run_name: e10_k10_uavvaste
+train_datasets: [taco, zerowaste, mju, bepli, uavvaste]
+val_datasets: [taco, zerowaste, mju, bepli]
+test_datasets: [uavvaste]
+train:
+  init_from: runs/e3_lodo_uavvaste/best.pt
+  subsample: {uavvaste: {n: 10, seed: 0}}
+  dataset_share: {uavvaste: 0.25}
+  epochs: 6
+  select: last

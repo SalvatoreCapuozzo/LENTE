@@ -19,3 +19,4 @@ paper/*.synctex.gz
 paper/*.fdb_latexmk
 paper/*.fls
 .pytest_cache/
+runs/_queue_status.json*

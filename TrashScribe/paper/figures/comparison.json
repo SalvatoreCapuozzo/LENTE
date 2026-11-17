@@ -1,0 +1,202 @@
+{
+ "rows": [
+  {
+   "dataset": "taco",
+   "image_id": "747",
+   "test_index": 225,
+   "clip_image_top": [
+    [
+     "trash",
+     0.351789653301239
+    ],
+    [
+     "plastic",
+     0.3512546122074127
+    ],
+    [
+     "cardboard",
+     0.19199097156524658
+    ]
+   ],
+   "iou_gdino": 0.9745508982035929,
+   "gdino_n": 3,
+   "iou_sam3": 0.9662969742651017,
+   "sam3_n": 3,
+   "iou_trashscribe_lodo": 0.9665914706198303,
+   "iou_trashscribe": 0.966190833959429,
+   "listed": [
+    {
+     "gt": "Crisp packet",
+     "name": "Other plastic wrapper",
+     "ts_desc": "plastic; flexible and deformable; opaque; a thin film or bag",
+     "clip_desc": "food or organic matter; semi-rigid; opaque; a thin film or bag",
+     "annotation": "plastic & metal; flexible and deformable; opaque; a thin film or bag"
+    }
+   ]
+  },
+  {
+   "dataset": "zerowaste",
+   "image_id": "671",
+   "test_index": 671,
+   "clip_image_top": [
+    [
+     "paper",
+     0.43529778718948364
+    ],
+    [
+     "trash",
+     0.4100812077522278
+    ],
+    [
+     "cardboard",
+     0.13174529373645782
+    ]
+   ],
+   "iou_gdino": 0.2858401772272744,
+   "gdino_n": 3,
+   "iou_sam3": 0.9418931583880038,
+   "sam3_n": 46,
+   "iou_trashscribe_lodo": 0.9177527883810769,
+   "iou_trashscribe": 0.9744223417983492,
+   "listed": [
+    {
+     "gt": "soft_plastic",
+     "name": "soft_plastic",
+     "ts_desc": "plastic; flexible and deformable; opaque; a thin film or bag",
+     "clip_desc": "paper or cardboard; semi-rigid; opaque; bottle-shaped",
+     "annotation": "plastic; flexible and deformable; a thin film or bag"
+    }
+   ]
+  },
+  {
+   "dataset": "uavvaste",
+   "image_id": "650",
+   "test_index": 101,
+   "clip_image_top": [
+    [
+     "paper",
+     0.39914417266845703
+    ],
+    [
+     "plastic",
+     0.3515823483467102
+    ],
+    [
+     "glass",
+     0.16633981466293335
+    ]
+   ],
+   "iou_gdino": 0.4891476971942827,
+   "gdino_n": 4,
+   "iou_sam3": 0.6534059945504087,
+   "sam3_n": 6,
+   "iou_trashscribe_lodo": 0.505775075987842,
+   "iou_trashscribe": 0.5917400135409614,
+   "listed": [
+    {
+     "gt": "waste",
+     "name": "Clear plastic bottle",
+     "ts_desc": "plastic; semi-rigid; transparent; bottle-shaped",
+     "clip_desc": "cigarette filter material; semi-rigid; transparent; bottle-shaped",
+     "annotation": "--"
+    }
+   ]
+  },
+  {
+   "dataset": "mju",
+   "image_id": "2020-01-07_16_01_18-06_color",
+   "test_index": 361,
+   "clip_image_top": [
+    [
+     "paper",
+     0.43810799717903137
+    ],
+    [
+     "cardboard",
+     0.21170936524868011
+    ],
+    [
+     "glass",
+     0.18084058165550232
+    ]
+   ],
+   "iou_gdino": 0.7942019751513221,
+   "gdino_n": 3,
+   "iou_sam3": 0.5197788175244576,
+   "sam3_n": 4,
+   "iou_trashscribe_lodo": 0.14937012597480503,
+   "iou_trashscribe": 0.9334600760456274,
+   "listed": [
+    {
+     "gt": "waste",
+     "name": "Plastic fragment",
+     "ts_desc": "plastic; rigid; opaque; a thin film or bag",
+     "clip_desc": "cigarette filter material; semi-rigid; transparent; a thin film or bag",
+     "annotation": "--"
+    }
+   ]
+  },
+  {
+   "dataset": "bepli",
+   "image_id": "2974",
+   "test_index": 439,
+   "clip_image_top": [
+    [
+     "plastic",
+     0.7599580883979797
+    ],
+    [
+     "metal",
+     0.09712020307779312
+    ],
+    [
+     "trash",
+     0.07151776552200317
+    ]
+   ],
+   "iou_gdino": 0.0,
+   "gdino_n": 0,
+   "iou_sam3": 0.8021854411055761,
+   "sam3_n": 33,
+   "iou_trashscribe_lodo": 0.6252992435124006,
+   "iou_trashscribe": 0.6803724532128699,
+   "listed": [
+    {
+     "gt": "Styrofoam piece",
+     "name": "Other plastic",
+     "ts_desc": "plastic; semi-rigid; opaque; a small irregular fragment",
+     "clip_desc": "rubber; flexible and deformable; opaque; string-like or rope-like",
+     "annotation": "expanded polystyrene foam; semi-rigid; opaque; a small irregular fragment"
+    }
+   ]
+  }
+ ],
+ "queries_gdino_owl": [
+  "a piece of litter",
+  "trash",
+  "garbage",
+  "plastic waste",
+  "a discarded bottle",
+  "a discarded can"
+ ],
+ "sam3_prompts": [
+  "litter",
+  "trash",
+  "garbage",
+  "plastic waste"
+ ],
+ "image_level_classes": [
+  "cardboard",
+  "glass",
+  "metal",
+  "paper",
+  "plastic",
+  "trash"
+ ],
+ "gdino_thresholds": {
+  "box": 0.3,
+  "text": 0.25,
+  "max_box_area": 0.5
+ },
+ "sam3_threshold": 0.5
+}

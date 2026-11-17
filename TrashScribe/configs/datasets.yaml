@@ -1,0 +1,98 @@
+# Dataset registry of the GPU workstation (RTX 3080 Laptop, Linux), built from
+# datasets.example.yaml. Paths are relative to data_root (~/data/waste).
+# Every COCO set was shrunk to longest side <= 1024 with scripts/prepare_coco.py
+# (annotations rescaled to the new frame): the model letterboxes to <= 1024 anyway.
+# See RESULTS.md, section "Data", for sources, sizes and checks.
+
+# Depth maps (geometry_depth_dir) are read only by configs with model.geometry: true
+# (E5 geometry ablation): Depth-Anything-V2-Small relative depth for EVERY dataset at
+# longest side 512 (scripts/precompute_depth.py --max-side 512). MJU-Waste's sensor depth
+# is not used: it is metric (far = large, holes = 0), the monocular maps are relative
+# inverse depth (near = large), and the gate min-max normalises each map.
+
+datasets:
+  # TACO v1.0 (Zenodo 3587843): 1500 images, 60 classes, scene labels. No official split.
+  - name: taco
+    type: coco
+    images_dir: TACO/data
+    ann_file: TACO/data/annotations.json
+    geometry_depth_dir: _depth/TACO/data
+    split: {seed: 42, fractions: {train: 0.7, val: 0.1, test: 0.2}}
+    scene_map:
+      "Indoor, Man-made": an indoor floor
+      "Pavement": pavement or road
+      "Sand, Dirt, Pebbles": sand, soil or pebbles
+      "Trash": a pile of other waste
+      "Vegetation": grass or vegetation
+      "Water": water
+
+  # ZeroWaste-f v1.2.1 (Zenodo 6412647, zerowaste-f-final.zip): official splits.
+  # Only cardboard / soft plastic / rigid plastic / metal are annotated on this paper
+  # sorting line; paper (waste for TrashScribe) and some other objects are not. Negatives
+  # are therefore the conveyor belt only (scripts/make_belt_masks.py); other unannotated
+  # pixels are ignored by the loss and by every metric.
+  - name: zerowaste
+    type: coco
+    surroundings: a conveyor belt in a recycling plant
+    splits:
+      train: {images_dir: zerowaste-f/train, ann_file: zerowaste-f/train/labels.json, negatives_dir: zerowaste-f/train/belt, geometry_depth_dir: _depth/zerowaste-f/train}
+      val:   {images_dir: zerowaste-f/val,   ann_file: zerowaste-f/val/labels.json,   negatives_dir: zerowaste-f/val/belt, geometry_depth_dir: _depth/zerowaste-f/val}
+      test:  {images_dir: zerowaste-f/test,  ann_file: zerowaste-f/test/labels.json,  negatives_dir: zerowaste-f/test/belt, geometry_depth_dir: _depth/zerowaste-f/test}
+
+  # UAVVaste (Zenodo 8214061): 772 aerial images, 1 class "rubbish".
+  # Official split (annotations/train_val_test_distribution_file.json): 540/116/116.
+  - name: uavvaste
+    type: coco
+    class_map: {"*": waste}
+    surroundings: a seen-from-above aerial view of the ground
+    splits:
+      train: {images_dir: UAVVaste, ann_file: UAVVaste/annotations_train.json, geometry_depth_dir: _depth/UAVVaste}
+      val:   {images_dir: UAVVaste, ann_file: UAVVaste/annotations_val.json, geometry_depth_dir: _depth/UAVVaste}
+      test:  {images_dir: UAVVaste, ann_file: UAVVaste/annotations_test.json, geometry_depth_dir: _depth/UAVVaste}
+
+  # MJU-Waste v1.0 (Google Drive): 2476 RGB-D 640x480 PNG, VOC layout, official
+  # splits 1485/248/742. No SegmentationObject folder in the release: instances
+  # are connected components (no contour supervision).
+  # Masks are decoded by palette colour: waste = (128,0,0). Reading raw indices
+  # inverts them (index 0 is waste here) and gives ~98% "waste" per image.
+  - name: mju
+    type: voc
+    root: MJU-Waste
+    entry: waste
+    image_ext: .png
+    waste_colors: [[128, 0, 0]]
+    geometry_depth_dir: DepthDA2      # relative to root
+    surroundings: an indoor floor
+    splits:
+      train: {split_file: train}
+      val:   {split_file: val}
+      test:  {split_file: test}
+
+  # BePLi v2 (SEANOE 00858/96963, BePLi_dataset_v2/plastic_coco): beach plastic
+  # litter, 13 classes, RLE masks, official splits 2234/744/744. Classes are aliases
+  # of TACO entries where the object type is the same, new entries in atlas/bepli.yaml
+  # otherwise. fishing_net -> "Fishing net" is EVAL-ONLY: that entry lives in the novel
+  # atlas, its objects train the waste mask only (never described, never "seen"), and
+  # its test objects measure naming / retrieval of a class written only as text.
+  - name: bepli
+    type: coco
+    class_map:
+      pet_bottle: Clear plastic bottle
+      other_bottle: Other plastic bottle
+      plastic_bag: Plastic bag
+      box_shaped_case: Plastic box or case
+      other_container: Other plastic container
+      rope: Rope & strings
+      other_string: Rope & strings
+      fishing_net: Fishing net
+      buoy: Buoy or float
+      other_fishing_gear: Other fishing gear
+      styrene_foam: Styrofoam piece
+      others: Other plastic
+      fragment: Plastic fragment
+    eval_only_entries: [Fishing net]
+    surroundings: sand, soil or pebbles
+    splits:
+      train: {images_dir: BePLi_v2/train, ann_file: BePLi_v2/train/annotations.json, geometry_depth_dir: _depth/BePLi_v2/train}
+      val:   {images_dir: BePLi_v2/val,   ann_file: BePLi_v2/val/annotations.json, geometry_depth_dir: _depth/BePLi_v2/val}
+      test:  {images_dir: BePLi_v2/test,  ann_file: BePLi_v2/test/annotations.json, geometry_depth_dir: _depth/BePLi_v2/test}

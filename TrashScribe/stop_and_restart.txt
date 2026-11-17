@@ -1,0 +1,42 @@
+SAFE STOP
+
+cd ~/LENTE/TrashScribe
+run=$(~/anaconda3/envs/trashscribe/bin/python -c "import json;print(json.load(open('runs/_queue_status.json'))['current']['name'])")
+t0=$(stat -c %Y runs/$run/last.pt 2>/dev/null || echo 0)
+echo "waiting for $run to save its epoch..."
+while [ "$(stat -c %Y runs/$run/last.pt 2>/dev/null || echo 0)" = "$t0" ]; do sleep 15; done
+systemctl --user stop trashscribe-queue
+# (SegFormer baselines also save last.pt every epoch since 15 Nov, so this works for them too)
+
+STOP THE CPU-SIDE HELPERS TOO (comparison figure, Grounding DINO baseline; ~2.5-4.6 GB RAM)
+
+systemctl --user stop trashscribe-chain trashscribe-watchdog trashscribe-sam3 trashscribe-gdino
+
+RESTART THE GROUNDING DINO BASELINE (CPU, ~6 h, starts from scratch)
+
+cd ~/LENTE/TrashScribe
+systemd-run --user --unit=trashscribe-gdino --collect -p MemoryMax=2500M -p MemorySwapMax=0 -p Nice=10 -p CPUQuota=400% \
+  --working-directory=$PWD --setenv=HF_HUB_OFFLINE=1 --setenv=CUDA_VISIBLE_DEVICES= \
+  -p StandardOutput=file:$PWD/runs/e4_heldout_classes__zeroshot_gdino.log -p StandardError=file:$PWD/runs/e4_heldout_classes__zeroshot_gdino.log \
+  ~/anaconda3/envs/trashscribe/bin/python scripts/baseline_zeroshot.py configs/exp/e4_heldout_classes.yaml --detector gdino --tasks where --device cpu --threads 4
+
+RESTART RUNS
+
+cd ~/LENTE/TrashScribe
+systemd-run --user --unit=trashscribe-queue --collect \
+  -p MemoryMax=8G -p MemorySwapMax=0 -p OOMPolicy=continue \
+  --working-directory=$PWD --setenv=HF_HUB_OFFLINE=1 \
+  -p StandardOutput=append:$PWD/runs/_queue.log -p StandardError=append:$PWD/runs/_queue.log \
+  ~/anaconda3/envs/trashscribe/bin/python scripts/run_queue.py
+
+RESTART REPORT TIMER
+
+cd ~/LENTE/TrashScribe
+systemd-run --user --unit=trashscribe-report --on-calendar='*:0/15' \
+  --working-directory=$PWD --setenv=HF_HUB_OFFLINE=1 \
+  ~/anaconda3/envs/trashscribe/bin/python scripts/report_results.py
+
+START WATCH PROGRESSES
+
+conda activate trashscribe
+python scripts/progress.py --watch 10

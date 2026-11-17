@@ -41,10 +41,41 @@ def lodo():
         v = load(f"e3_lodo_{d}")
         s = load(f"e3_lodo_{d}__segformer_mit-b2")
         z = load("e4_heldout_classes__zeroshot")
+        gd = load("e4_heldout_classes__zeroshot_gdino")
+        # SAM 3, 16 prompts, masks <= half the image: the stronger rule pooled (0.613 vs 0.579) and the
+        # same rule as the Grounding DINO boxes and the E9 teacher labels
+        s3 = load("e4_heldout_classes__zeroshot_sam3obj_area")
         i = load(f"e1_indomain_{d}")
-        rows.append(f"{NAMES[d]} & {g(z, 'where_owlv2_sam2', d, 'iou')} & {g(s, 'seg', d, 'iou')} & "
-                    f"{g(v, 'seg', d, 'iou')} & {g(v, 'seg', d, 'bf1')} & {g(i, 'seg', d, 'iou')} \\\\")
+        a = load("e4_heldout_classes")       # all five datasets in training: the seen-environment reference
+        rows.append(f"{NAMES[d]} & {g(z, 'where_owlv2_sam2', d, 'iou')} & {g(gd, 'where_gdino_sam2', d, 'iou')} & "
+                    f"{g(s3, 'where_sam3_area', d, 'iou')} & "
+                    f"{g(s, 'seg', d, 'iou')} & "
+                    f"{g(v, 'seg', d, 'iou')} & {g(a, 'seg', d, 'iou')} & "
+                    f"{g(i, 'seg', d, 'iou')} \\\\")
     write("tab_lodo", "\n".join(rows) + "\n")
+
+
+def ladder():
+    """Edge model vs SAM 3 by the amount of data from the new site (17 Nov): SAM 3 zero-shot (fair rule)
+    against TrashScribe with no site data (E3), generic negatives (E3b, MJU only), SAM 3 labels on the
+    site's unlabelled images (E9), 10 / 50 labelled images (E10), and the site fully in training (E4).
+    Cells at or above SAM 3 are bold."""
+    s3 = load("e4_heldout_classes__zeroshot_sam3obj_area")
+    a = load("e4_heldout_classes")
+    rows = []
+    for d in DATASETS:
+        ref = (((s3 or {}).get("where_sam3_area") or {}).get(d) or {}).get("iou")
+        cells = []
+        for run in (f"e3_lodo_{d}", "e3b_lodo_mju_negatives" if d == "mju" else None, f"e9_sam3_{d}",
+                    f"e10_k10_{d}", f"e10_k50_{d}", None):
+            m = a if run is None and len(cells) == 5 else (load(run) if run else None)
+            v = (((m or {}).get("seg") or {}).get(d) or {}).get("iou")
+            txt = "--" if v is None else f"{100 * v:.1f}"
+            if v is not None and ref is not None and v >= ref:
+                txt = f"\\textbf{{{txt}}}"
+            cells.append(txt)
+        rows.append(f"{NAMES[d]} & {g(s3, 'where_sam3_area', d, 'iou')} & " + " & ".join(cells) + " \\\\")
+    write("tab_ladder", "\n".join(rows) + "\n")
 
 
 def ablation():
@@ -87,7 +118,7 @@ def retrieval():
     for e, r in sorted(((m or {}).get("retrieval") or {}).items()):
         if e in ((m or {}).get("summary", {}).get("unseen_classes") or []):
             rows.append(f"{e} & {r['n_pos']} & {r['ap']:.3f} & [{r['ci'][0]:.2f}, {r['ci'][1]:.2f}] & "
-                        f"{r['lift']:.2f} & {r['p']:.3f} \\\\")
+                        f"{r['lift']:.1f} & {'$<$0.001' if r['p'] < 0.001 else format(r['p'], '.3f')} \\\\")
     write("tab_retrieval", "\n".join(rows) + "\n" if rows else "\\multicolumn{6}{c}{-- (run E4) --} \\\\\n")
 
 
@@ -105,6 +136,7 @@ def edge():
 
 if __name__ == "__main__":
     lodo()
+    ladder()
     ablation()
     describe()
     retrieval()

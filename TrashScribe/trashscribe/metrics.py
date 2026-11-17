@@ -18,6 +18,8 @@ import numpy as np
 import torch
 from sklearn.metrics import average_precision_score
 
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz      # numpy < 2 has only trapz
+
 
 class SegMeter:
     def __init__(self, thr=0.5, bf_tol=2):
@@ -33,12 +35,15 @@ class SegMeter:
         tp = (pred & tgt).sum((1, 2, 3)).cpu().numpy()
         fp = (pred & ~tgt).sum((1, 2, 3)).cpu().numpy()
         fn = (~pred & tgt).sum((1, 2, 3)).cpu().numpy()
-        pn, tn = pred.cpu().numpy(), tgt.cpu().numpy()
+        # boundaries from the UNMASKED maps, scored only inside the valid region: masking
+        # first would draw fake edges wherever a prediction runs into an ignored area
+        pn, tn = (prob > self.thr).cpu().numpy(), (target > 0.5).cpu().numpy()
+        vn = valid.cpu().numpy()
         for i, d in enumerate(datasets):
             for key in (d, "_all"):
                 self.c[key] += (tp[i], fp[i], fn[i])
             if boundary:
-                f = boundary_f1(pn[i, 0], tn[i, 0], self.tol)
+                f = boundary_f1(pn[i, 0], tn[i, 0], self.tol, valid=vn[i, 0])
                 if f is not None:
                     self.bf[d].append(f)
                     self.bf["_all"].append(f)
@@ -58,8 +63,12 @@ def _edges(m: np.ndarray) -> np.ndarray:
     return (m - cv2.erode(m, np.ones((3, 3), np.uint8))).astype(bool)
 
 
-def boundary_f1(pred: np.ndarray, gt: np.ndarray, tol=2):
+def boundary_f1(pred: np.ndarray, gt: np.ndarray, tol=2, valid: np.ndarray | None = None):
     pe, ge = _edges(pred), _edges(gt)
+    if valid is not None:
+        k = 2 * tol + 3
+        region = cv2.erode(valid.astype(np.uint8), np.ones((k, k), np.uint8)).astype(bool)
+        pe, ge = pe & region, ge & region
     if not pe.any() and not ge.any():
         return None
     if not pe.any() or not ge.any():
@@ -71,9 +80,10 @@ def boundary_f1(pred: np.ndarray, gt: np.ndarray, tol=2):
     return float(2 * p * r / max(p + r, 1e-9))
 
 
-def descriptor_map(probs: np.ndarray, tgt: np.ndarray, msk: np.ndarray, schema) -> dict:
+def descriptor_map(probs: np.ndarray, tgt: np.ndarray, msk: np.ndarray, schema, skip_values=None) -> dict:
     """Per-field mAP over values with at least one positive and one negative, and
-    the prevalence floor (expected AP of a random ranking)."""
+    the prevalence floor (expected AP of a random ranking). skip_values: bool array
+    over values left out (held-out descriptor values must not steer model selection)."""
     out = {}
     for f in schema.fields:
         sl = schema.slices[f.name]
@@ -82,8 +92,9 @@ def descriptor_map(probs: np.ndarray, tgt: np.ndarray, msk: np.ndarray, schema) 
             continue
         P, T = probs[rows, sl], (tgt[rows, sl] > 0).astype(int)
         aps, prev = [], []
+        skip = skip_values[sl] if skip_values is not None else np.zeros(T.shape[1], bool)
         for v in range(T.shape[1]):
-            if 0 < T[:, v].sum() < len(T):
+            if not skip[v] and 0 < T[:, v].sum() < len(T):
                 aps.append(average_precision_score(T[:, v], P[:, v]))
                 prev.append(T[:, v].mean())
         if aps:
@@ -142,8 +153,13 @@ def environment_leakage(z: np.ndarray, env: np.ndarray, folds=5, seed=0) -> dict
     from sklearn.model_selection import StratifiedKFold
     keep = env >= 0
     z, env = z[keep], env[keep]
+    # environments with fewer objects than folds are left out of the probe (before,
+    # a single rare one disabled the whole measurement)
     classes, counts = np.unique(env, return_counts=True)
-    if len(classes) < 2 or counts.min() < folds:
+    ok = np.isin(env, classes[counts >= folds])
+    z, env = z[ok], env[ok]
+    classes, counts = np.unique(env, return_counts=True)
+    if len(classes) < 2:
         return {}
     z = z / (np.linalg.norm(z, axis=1, keepdims=True) + 1e-8)
     accs = []
@@ -151,22 +167,28 @@ def environment_leakage(z: np.ndarray, env: np.ndarray, folds=5, seed=0) -> dict
         clf = LogisticRegression(max_iter=2000).fit(z[tr], env[tr])
         accs.append((clf.predict(z[te]) == env[te]).mean())
     return {"probe_acc": float(np.mean(accs)), "majority": float(counts.max() / counts.sum()),
-            "n": int(len(env))}
+            "n": int(len(env)), "n_env": int(len(classes))}
 
 
-def ausuc(fused: np.ndarray, true: list, entry_names: list, seen: set, unseen: set, n=200) -> dict:
+def ausuc(fused: np.ndarray, true: list, entry_names: list, seen: set, unseen: set, n=200,
+          penalized: set | None = None) -> dict:
     """Area Under the Seen-Unseen accuracy Curve (Chao et al., ECCV 2016).
 
     Calibrated stacking subtracts gamma from every seen-class score; sweeping
     gamma traces seen vs unseen per-class accuracy. The area is calibration-free,
     so no held-out class is needed to tune anything. Also returns the curve and
-    the best harmonic mean along it (an ORACLE value: gamma chosen on test)."""
+    the best harmonic mean along it (an ORACLE value: gamma chosen on test).
+
+    penalized: every class seen in TRAINING (gamma applies to all of them). Before
+    13 Nov 2026 only the seen classes present in the test set were penalised, so
+    trained classes absent from test kept their bias and took predictions: AUSUC
+    and the oracle H were underestimated (E4: 0.031 -> 0.055)."""
     idx = [i for i, t in enumerate(true) if t in seen or t in unseen]
     if not idx or not seen or not unseen:
         return {}
     F_ = fused[idx]
     T = [true[i] for i in idx]
-    is_seen = np.array([e in seen for e in entry_names])
+    is_seen = np.array([e in (penalized if penalized is not None else seen) for e in entry_names])
     span = float(np.nanmax(F_) - np.nanmin(F_)) if np.isfinite(F_).any() else 1.0
     pts = []
     for g in np.linspace(-span, span, n):
@@ -178,7 +200,7 @@ def ausuc(fused: np.ndarray, true: list, entry_names: list, seen: set, unseen: s
     pts = sorted(set(pts))
     s_, u_ = np.array([p[0] for p in pts]), np.array([p[1] for p in pts])
     order = np.argsort(s_)
-    area = float(np.trapezoid(u_[order], s_[order])) if len(pts) > 1 else 0.0
+    area = float(_trapezoid(u_[order], s_[order])) if len(pts) > 1 else 0.0
     h = [2 * a * b / (a + b) if a + b > 0 else 0.0 for a, b in pts]
     k = int(np.argmax(h))
     return {"ausuc": area, "best_H_oracle": float(h[k]), "at_seen": pts[k][0], "at_unseen": pts[k][1],

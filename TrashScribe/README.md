@@ -65,14 +65,15 @@ Full notes with sources: [docs/SOTA.md](docs/SOTA.md).
 TrashScribe/
 ├── atlas/            schema.yaml (descriptor vocabulary), taco.yaml (60 classes), zerowaste.yaml,
 │                     binary.yaml, novel_field_classes.yaml (classes in NO dataset, inference only)
-├── configs/          base.yaml, datasets.example.yaml, synthetic_*.yaml, exp/ (23 experiment configs)
+├── configs/          base.yaml, datasets.yaml (registry), gpu_queue.yaml, synthetic_*.yaml, exp/ (experiment configs E1–E10)
 ├── trashscribe/           package: models/, data/, losses, metrics, naming, monitoring, engine, edge_runtime
 ├── scripts/          train, evaluate, run_grid, list_runs, export_onnx, build_trt.sh, bench_edge, infer,
 │                     baseline_segformer, baseline_zeroshot, precompute_depth, inspect_dataset, make_grid
 ├── tests/            unit tests of the design properties (pytest)
 ├── runs/             one folder per run (config, history, metrics, checkpoints [git-ignored])
 ├── attempts/         ATTEMPTS.md — journal of every attempt, hypothesis and outcome
-├── docs/             SOTA.md
+├── docs/             handover: CONTEXT, ARCHITECTURE, EXPERIMENTS, OPERATIONS, JETSON, NEXT_STEPS,
+│                     MIGRATION; SOTA.md (5 Nov literature notes)
 └── paper/            NCAA manuscript (Springer Nature sn-jnl template), title page, cover letter, checklist
 ```
 
@@ -87,13 +88,14 @@ cd TrashScribe
 .venv/bin/python -m pytest tests -q
 ```
 
-**NVIDIA workstation (RTX 3090 / any CUDA GPU):**
+**NVIDIA workstation (any CUDA GPU):** the conda env `trashscribe` pins the exact versions of
+the GPU grid (Python 3.12.3, torch 2.9.1+cu130, transformers 5.2.0; see [environment.yml](environment.yml)):
 ```bash
-conda create -n trashscribe python=3.10 -y && conda activate trashscribe
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124   # match your driver
-pip install -r requirements.txt
+conda env create -f environment.yml      # other CUDA drivers: change "cu130" in the file
+conda activate trashscribe
 python -m pytest tests -q
 ```
+Running the grid and watching it: [RESULTS.md](RESULTS.md) (top of the file).
 
 **Jetson Orin Nano 8 GB (JetPack 6.x):** see [requirements-jetson.txt](requirements-jetson.txt) — PyTorch
 from NVIDIA's Jetson wheels, TensorRT from JetPack, then `bash scripts/build_trt.sh`.
@@ -119,39 +121,19 @@ python3 scripts/bench_edge.py --engine .../trashscribe_640_fp16.engine --onnx ..
 python3 scripts/infer.py --engine .../trashscribe_640_fp16.engine --cache .../atlas_cache.pt --source 0
 ```
 
-## Status (5 Nov 2026)
+## Status (17 Nov 2026)
 
-Done and tested on the Mac (M2 Pro, MPS):
-* full package; 11 unit tests green (identity at init, no parameter grows with the vocabulary,
-  held-out leakage guard, transplant consistency, SAM2 frozen core, LoRA folding);
-* end-to-end training + evaluation on the synthetic sanity benchmark with the tiny CNN and with
-  SAM2.1-Tiny + adapters (see [attempts/ATTEMPTS.md](attempts/ATTEMPTS.md));
-* ONNX export of the complete 640-px graph, max |ONNX − PyTorch| ≈ 8e-6;
-* offline pipeline (instances → descriptors → atlas name → report) and benchmark harness;
-* zero-shot baselines (OWLv2→SAM2, raw CLIP) and SegFormer baseline wired to the same splits;
-* NCAA manuscript (anonymised, 15 pages, compiles with the official Springer Nature class):
-  introduction, related work, method and protocol written from the code; results tables are
-  generated from `runs/` and show "--" until the GPU runs exist. Title page and cover letter
-  compile too. Two guest editors share the authors' university: declare it (see paper/README.md).
+**Agents and new collaborators: start with [AGENTS.md](AGENTS.md)** (warnings, reading order) and the handover
+documents in [docs/](docs/): CONTEXT, ARCHITECTURE, EXPERIMENTS, OPERATIONS, JETSON, NEXT_STEPS, MIGRATION.
 
-Not done (needs NVIDIA hardware and the datasets): every real-data number, TensorRT engines,
-Jetson latency/power.
-
-## When to move to NVIDIA hardware
-
-**Now, for training.** Everything that can be validated without real data and without CUDA is
-validated. This Mac cannot go further usefully: no CUDA (bf16 autocast, TensorRT and real
-throughput are CUDA-only), ~8 GB of free disk (TACO + ZeroWaste-f + UAVVaste + MJU + BePLi
-are tens of GB), and MPS runs this model in fp32 only, far below what an RTX 3090 delivers.
-
-1. **Workstation with an NVIDIA GPU (the RTX 3090 used for LENTE) — start immediately:**
-   download datasets, `inspect_dataset.py` each one, then run E4 (held-out classes) first, E3 (LODO)
-   second, E5 ablations third, E1/E2 references and baselines last. Rough budget, not measured:
-   2–4 h per run at 1024 px with `epoch_size: 4000`, 40 epochs, batch 8 — time the first run and
-   shrink `epoch_size`/`epochs` if the grid does not fit the calendar.
-2. **Jetson Orin Nano 8 GB — once one trained model exists (e.g. `e6_edge_640`):** export ONNX on the
-   workstation, copy `.onnx` + `atlas_cache.pt`, build the engine **on the Jetson** (engines are not
-   portable), benchmark in MAXN mode with `--check`, record power with `tegrastats`.
-
-Suggested calendar to the 30 Nov deadline: 6–16 Nov runs (E4, E3, E5), 14–18 Nov Jetson,
-17–27 Nov writing with numbers from `list_runs.py`, 28–30 Nov anonymisation and submission.
+* GPU grid on an RTX 3080 Laptop: 40+ runs done, queue running until about 20 Nov
+  ([RESULTS.md](RESULTS.md), `python scripts/progress.py`).
+* Supported findings: a cross-environment (leave-one-dataset-out) benchmark over five public waste datasets;
+  generic waste-free indoor photos fix the indoor failure (MJU 0.055 → 0.363, above SAM 3); with the site in
+  training the 34 M edge model beats SAM 3 (848 M) on all five datasets, and SAM 3 labels or 10 labelled images
+  of a new site already put it above SAM 3 on three of them; dense attribute description at 3× the prevalence
+  floor; a CLIP-distilled head reads new classes and properties like CLIP in the same pass.
+* Not supported: open-vocabulary naming better than CLIP; environment removal by the adversary.
+* Manuscript `paper/main.tex` compiles (26 pp, PRELIMINARY); title/abstract/introduction await the reframing.
+* Edge: ONNX export of the 640-px model done (`runs/e6_edge_640/export/`, git-ignored); **no Jetson measurement
+  yet** (see [docs/JETSON.md](docs/JETSON.md) for the files to copy).

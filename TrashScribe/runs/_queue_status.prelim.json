@@ -1,0 +1,9 @@
+{
+ "history": [],
+ "current": {
+  "name": "e4_heldout_classes",
+  "attempt": 1,
+  "started": "2026-11-05 15:35:40",
+  "cmd": "/home/salvatorecapuozzo/LENTE/TrashScribe/scripts/train.py /home/salvatorecapuozzo/LENTE/TrashScribe/configs/exp/e4_heldout_classes.yaml train.batch_size=4 train.accum_steps=2 train.num_workers=6 train.val_num_workers=3 train.val_batch_size=4 train.val_prefetch=1 train.pin_memory=false --resume"
+ }
+}

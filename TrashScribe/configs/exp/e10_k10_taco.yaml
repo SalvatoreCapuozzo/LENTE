@@ -1,0 +1,16 @@
+# E10 (17 Nov): how many labelled images of a new site does the 34 M edge model need to match or beat
+# SAM 3 (848 M, zero-shot) there? The leave-one-out model for taco (E3) is fine-tuned with 10 labelled
+# taco TRAIN images (seeded random subset, list written to the run folder) drawn for 25 % of the training
+# samples, plus the four other datasets. Fixed short schedule, the LAST epoch is tested: validation holds
+# only the four other datasets, so it cannot choose an epoch for the new site. Test: taco test, real labels.
+_base_: e3_lodo_taco.yaml
+run_name: e10_k10_taco
+train_datasets: [zerowaste, uavvaste, mju, bepli, taco]
+val_datasets: [zerowaste, uavvaste, mju, bepli]
+test_datasets: [taco]
+train:
+  init_from: runs/e3_lodo_taco/best.pt
+  subsample: {taco: {n: 10, seed: 0}}
+  dataset_share: {taco: 0.25}
+  epochs: 6
+  select: last

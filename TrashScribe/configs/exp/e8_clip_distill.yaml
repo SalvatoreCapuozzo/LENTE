@@ -1,0 +1,16 @@
+# E8 (15 Nov) — "describe AND name in one pass": E4 + a dense head distilled from frozen CLIP
+# ViT-B/16 crop embeddings (trashscribe/clip_teacher.py). Motivation (post-hoc, 13 Nov): raw
+# CLIP crops name / retrieve the 7 held-out classes better than TrashScribe (retrieval mean AP
+# 0.078 vs 0.034, naming H 0.217 vs 0.155) and the two are complementary (0.108 / 0.188), but
+# CLIP needs one extra network pass per object crop. Built on E7 (same 7 held-out classes as E4
+# AND the 3 never-supervised descriptor values): E7 scored those values at chance or below for
+# foam / crumpled (AP 0.096 / 0.062 vs floor 0.097 / 0.083) where raw CLIP gets 0.114 / 0.276.
+# One run tests both: unseen classes and unseen values through the distilled field. Data, sampler
+# and model selection unchanged; the distilled field never sees a class name or a descriptor label.
+_base_: e7_heldout_values.yaml
+run_name: e8_clip_distill
+model:
+  clip_field: true
+train:
+  loss: {clip: 1.0}
+  clip_teacher: {context: 1.35, min_side: 48, max_objects: 24}

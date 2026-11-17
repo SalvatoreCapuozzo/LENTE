@@ -7,14 +7,14 @@ device: auto                 # auto -> cuda > mps > cpu
 seed: 42
 
 schema: atlas/schema.yaml
-atlases: [atlas/taco.yaml, atlas/zerowaste.yaml, atlas/binary.yaml]
+atlases: [atlas/taco.yaml, atlas/zerowaste.yaml, atlas/bepli.yaml, atlas/binary.yaml]
 novel_atlases: [atlas/novel_field_classes.yaml]     # inference only (never trained)
 text_model: openai/clip-vit-base-patch16
 text_cache: runs/_cache/text_clip_b16.pt
 strict_atlas: true           # every class of every dataset must be in an atlas
 
 data_root: ~/data/waste      # relative dataset paths resolve against this
-datasets_file: configs/datasets.example.yaml
+datasets_file: configs/datasets.yaml   # GPU workstation registry; datasets.example.yaml is the template
 train_datasets: null         # null = every dataset that has a train split
 val_datasets: null           # null = same as train_datasets
 test_datasets: null

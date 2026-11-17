@@ -1,0 +1,23 @@
+# E9 (15 Nov): SAM 3 as an OFFLINE TEACHER at a new site. The leave-one-out model for mju (E3) is
+# fine-tuned on the four labelled datasets plus the mju TRAIN images labelled by SAM 3
+# (scripts/baseline_zeroshot.py --detector sam3 --tasks pseudo; the real labels are never used).
+# Selection: the four validation sets plus the SAM 3-labelled mju val images. Test: mju test, real
+# labels. Deployment reading: frames collected at the new site, labelled once by SAM 3 on a
+# workstation; SAM 3 never runs on the device.
+_base_: e3_lodo_mju.yaml
+run_name: e9_sam3_mju
+extra_datasets:
+  - name: mju_sam3
+    type: masks
+    surroundings: an indoor floor
+    ignore_value: 255
+    splits:
+      train: {images_dir: _pseudo/sam3/mju/train/images, masks_dir: _pseudo/sam3/mju/train/masks}
+      val:   {images_dir: _pseudo/sam3/mju/val/images, masks_dir: _pseudo/sam3/mju/val/masks}
+train_datasets: [taco, zerowaste, uavvaste, bepli, mju_sam3]
+val_datasets: [taco, zerowaste, uavvaste, bepli, mju_sam3]
+test_datasets: [mju]
+train:
+  init_from: runs/e3_lodo_mju/best.pt
+  epochs: 12
+  patience: 4

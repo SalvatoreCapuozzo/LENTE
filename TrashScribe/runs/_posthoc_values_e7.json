@@ -1,0 +1,62 @@
+{
+ "e4_heldout_classes": {
+  "material: metal": {
+   "ap": 0.28742417215160654,
+   "floor": 0.0063482466747279325,
+   "n_pos": 168,
+   "n": 26464
+  },
+  "material: expanded polystyrene foam": {
+   "ap": 0.4322992879298798,
+   "floor": 0.09696191051995164,
+   "n_pos": 2566,
+   "n": 26464
+  },
+  "surface: crumpled or wrinkled": {
+   "ap": 0.836262373344727,
+   "floor": 0.08283413532357851,
+   "n_pos": 1687,
+   "n": 20366
+  }
+ },
+ "e7_heldout_values": {
+  "material: metal": {
+   "ap": 0.13969280636236245,
+   "floor": 0.0063482466747279325,
+   "n_pos": 168,
+   "n": 26464
+  },
+  "material: expanded polystyrene foam": {
+   "ap": 0.09624313856035559,
+   "floor": 0.09696191051995164,
+   "n_pos": 2566,
+   "n": 26464
+  },
+  "surface: crumpled or wrinkled": {
+   "ap": 0.062185247971768734,
+   "floor": 0.08283413532357851,
+   "n_pos": 1687,
+   "n": 20366
+  }
+ },
+ "raw CLIP crops": {
+  "material: metal": {
+   "ap": 0.03316215781577552,
+   "floor": 0.0063482466747279325,
+   "n_pos": 168,
+   "n": 26464
+  },
+  "material: expanded polystyrene foam": {
+   "ap": 0.11376405530845643,
+   "floor": 0.09696191051995164,
+   "n_pos": 2566,
+   "n": 26464
+  },
+  "surface: crumpled or wrinkled": {
+   "ap": 0.27592760244775616,
+   "floor": 0.08283413532357851,
+   "n_pos": 1687,
+   "n": 20366
+  }
+ }
+}

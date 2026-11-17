@@ -1,0 +1,170 @@
+{
+ "multi_run": "e4_heldout_classes",
+ "seed": 0,
+ "rule": "seeded shuffle of the test split, first landscape image with the stated number of annotated objects whose largest (TACO: held-out; BePLi: fishing-net) object covers min_frac of the image",
+ "rows_rule": [
+  [
+   "taco",
+   "e3_lodo_taco",
+   [
+    1,
+    8
+   ],
+   "holdout",
+   0.01
+  ],
+  [
+   "zerowaste",
+   "e3_lodo_zerowaste",
+   [
+    2,
+    10
+   ],
+   null,
+   0.01
+  ],
+  [
+   "uavvaste",
+   "e3_lodo_uavvaste",
+   [
+    2,
+    12
+   ],
+   null,
+   0.001
+  ],
+  [
+   "mju",
+   "e3_lodo_mju",
+   [
+    1,
+    2
+   ],
+   null,
+   0.005
+  ],
+  [
+   "bepli",
+   "e3_lodo_bepli",
+   [
+    4,
+    40
+   ],
+   "Fishing net",
+   0.005
+  ]
+ ],
+ "rows": [
+  {
+   "dataset": "taco",
+   "image_id": "747",
+   "test_index": 225,
+   "iou_multi": 0.966190833959429,
+   "iou_lodo": 0.9665914706198303,
+   "n_gt": 1,
+   "n_pred": 1,
+   "listed": [
+    {
+     "name": "Other plastic wrapper",
+     "prob": 0.0779489278793335,
+     "gt": "Crisp packet",
+     "desc": "plastic; flexible and deformable; opaque; a thin film or bag",
+     "area": 9088
+    }
+   ]
+  },
+  {
+   "dataset": "zerowaste",
+   "image_id": "671",
+   "test_index": 671,
+   "iou_multi": 0.9744345158384261,
+   "iou_lodo": 0.9177212287941311,
+   "n_gt": 7,
+   "n_pred": 20,
+   "listed": [
+    {
+     "name": "soft_plastic",
+     "prob": 0.06438876688480377,
+     "gt": "soft_plastic",
+     "desc": "plastic; flexible and deformable; opaque; a thin film or bag",
+     "area": 90144
+    },
+    {
+     "name": "cardboard",
+     "prob": 0.08980400115251541,
+     "gt": "cardboard",
+     "desc": "paper or cardboard; semi-rigid; opaque; a thin film or bag",
+     "area": 89120
+    }
+   ]
+  },
+  {
+   "dataset": "uavvaste",
+   "image_id": "650",
+   "test_index": 101,
+   "iou_multi": 0.5917400135409614,
+   "iou_lodo": 0.5054678007290401,
+   "n_gt": 2,
+   "n_pred": 1,
+   "listed": [
+    {
+     "name": "Clear plastic bottle",
+     "prob": 0.1286935955286026,
+     "gt": "waste",
+     "desc": "plastic; semi-rigid; transparent; bottle-shaped",
+     "area": 912
+    }
+   ]
+  },
+  {
+   "dataset": "mju",
+   "image_id": "2020-01-07_16_01_18-06_color",
+   "test_index": 361,
+   "iou_multi": 0.9338403041825095,
+   "iou_lodo": 0.14929847703561577,
+   "n_gt": 1,
+   "n_pred": 2,
+   "listed": [
+    {
+     "name": "Plastic fragment",
+     "prob": 0.07359065115451813,
+     "gt": "waste",
+     "desc": "plastic; rigid; opaque; a thin film or bag",
+     "area": 2210
+    },
+    {
+     "name": "Plastic bag",
+     "prob": 0.08458692580461502,
+     "gt": "waste",
+     "desc": "plastic; opaque; a thin film or bag",
+     "area": 225
+    }
+   ]
+  },
+  {
+   "dataset": "bepli",
+   "image_id": "2974",
+   "test_index": 439,
+   "iou_multi": 0.6804019174041298,
+   "iou_lodo": 0.6252992435124006,
+   "n_gt": 11,
+   "n_pred": 13,
+   "listed": [
+    {
+     "name": "Clear plastic bottle",
+     "prob": 0.10509729385375977,
+     "gt": "Fishing net",
+     "desc": "plastic; semi-rigid; transparent",
+     "area": 162
+    },
+    {
+     "name": "Other plastic",
+     "prob": 0.07815823704004288,
+     "gt": "Styrofoam piece",
+     "desc": "plastic; semi-rigid; opaque; a small irregular fragment",
+     "area": 4379
+    }
+   ]
+  }
+ ]
+}

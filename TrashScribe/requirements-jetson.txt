@@ -12,3 +12,6 @@ PyYAML
 pillow
 # optional: onnxruntime-gpu for Jetson (from the jetson-ai-lab index) to run --onnx
 # transformers==5.2.0 only if you want to embed NEW atlas phrases on the device
+# optional: onnxsim (pip) simplifies the graph before scripts/build_trt.sh
+# NOT needed on the device: albumentations (training only; imported lazily since 17 Nov)
+# Files to copy from the workstation (git-ignored): see docs/JETSON.md, "Files not in git"

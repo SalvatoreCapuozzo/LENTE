@@ -1,0 +1,596 @@
+{
+ "runs/e4_heldout_classes": {
+  "z": {
+   "acc": 0.9725818735719726,
+   "majority": 0.9679033837449679,
+   "n": 9191,
+   "classes": 15,
+   "per_class": {
+    "Cigarette": {
+     "n": 164,
+     "n_env": 3,
+     "acc": 0.6524390243902439,
+     "majority": 0.6036585365853658
+    },
+    "Clear plastic bottle": {
+     "n": 1034,
+     "n_env": 3,
+     "acc": 0.9661508704061895,
+     "majority": 0.9622823984526112
+    },
+    "Disposable plastic cup": {
+     "n": 23,
+     "n_env": 2,
+     "acc": 0.7391304347826086,
+     "majority": 0.7391304347826086
+    },
+    "Drink can": {
+     "n": 31,
+     "n_env": 3,
+     "acc": 0.6774193548387096,
+     "majority": 0.5806451612903226
+    },
+    "Normal paper": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.42857142857142855,
+     "majority": 0.5
+    },
+    "Other carton": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.5,
+     "majority": 0.5714285714285714
+    },
+    "Other plastic": {
+     "n": 4553,
+     "n_env": 2,
+     "acc": 0.9953876564902262,
+     "majority": 0.9953876564902262
+    },
+    "Other plastic bottle": {
+     "n": 510,
+     "n_env": 3,
+     "acc": 0.9784313725490196,
+     "majority": 0.9764705882352941
+    },
+    "Other plastic wrapper": {
+     "n": 48,
+     "n_env": 3,
+     "acc": 0.6041666666666666,
+     "majority": 0.5833333333333334
+    },
+    "Paper cup": {
+     "n": 12,
+     "n_env": 2,
+     "acc": 0.6666666666666666,
+     "majority": 0.5833333333333334
+    },
+    "Plastic bottle cap": {
+     "n": 43,
+     "n_env": 3,
+     "acc": 0.5581395348837209,
+     "majority": 0.5348837209302325
+    },
+    "Plastic film": {
+     "n": 79,
+     "n_env": 4,
+     "acc": 0.759493670886076,
+     "majority": 0.6455696202531646
+    },
+    "Plastic straw": {
+     "n": 16,
+     "n_env": 2,
+     "acc": 0.625,
+     "majority": 0.625
+    },
+    "Styrofoam piece": {
+     "n": 2555,
+     "n_env": 2,
+     "acc": 0.9972602739726028,
+     "majority": 0.9972602739726028
+    },
+    "Unlabeled litter": {
+     "n": 95,
+     "n_env": 3,
+     "acc": 0.7578947368421053,
+     "majority": 0.5789473684210527
+    }
+   }
+  },
+  "zc": {
+   "acc": 0.9857469263409857,
+   "majority": 0.9679033837449679,
+   "n": 9191,
+   "classes": 15,
+   "per_class": {
+    "Cigarette": {
+     "n": 164,
+     "n_env": 3,
+     "acc": 0.9024390243902439,
+     "majority": 0.6036585365853658
+    },
+    "Clear plastic bottle": {
+     "n": 1034,
+     "n_env": 3,
+     "acc": 0.9845261121856866,
+     "majority": 0.9622823984526112
+    },
+    "Disposable plastic cup": {
+     "n": 23,
+     "n_env": 2,
+     "acc": 0.8260869565217391,
+     "majority": 0.7391304347826086
+    },
+    "Drink can": {
+     "n": 31,
+     "n_env": 3,
+     "acc": 0.6774193548387096,
+     "majority": 0.5806451612903226
+    },
+    "Normal paper": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.6428571428571429,
+     "majority": 0.5
+    },
+    "Other carton": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.8571428571428571,
+     "majority": 0.5714285714285714
+    },
+    "Other plastic": {
+     "n": 4553,
+     "n_env": 2,
+     "acc": 0.9967054689215902,
+     "majority": 0.9953876564902262
+    },
+    "Other plastic bottle": {
+     "n": 510,
+     "n_env": 3,
+     "acc": 0.9862745098039216,
+     "majority": 0.9764705882352941
+    },
+    "Other plastic wrapper": {
+     "n": 48,
+     "n_env": 3,
+     "acc": 0.875,
+     "majority": 0.5833333333333334
+    },
+    "Paper cup": {
+     "n": 12,
+     "n_env": 2,
+     "acc": 0.9166666666666666,
+     "majority": 0.5833333333333334
+    },
+    "Plastic bottle cap": {
+     "n": 43,
+     "n_env": 3,
+     "acc": 0.7209302325581395,
+     "majority": 0.5348837209302325
+    },
+    "Plastic film": {
+     "n": 79,
+     "n_env": 4,
+     "acc": 0.8481012658227848,
+     "majority": 0.6455696202531646
+    },
+    "Plastic straw": {
+     "n": 16,
+     "n_env": 2,
+     "acc": 0.6875,
+     "majority": 0.625
+    },
+    "Styrofoam piece": {
+     "n": 2555,
+     "n_env": 2,
+     "acc": 0.9972602739726028,
+     "majority": 0.9972602739726028
+    },
+    "Unlabeled litter": {
+     "n": 95,
+     "n_env": 3,
+     "acc": 0.8631578947368421,
+     "majority": 0.5789473684210527
+    }
+   }
+  }
+ },
+ "runs/e5_ablate_no_adversary": {
+  "z": {
+   "acc": 0.9764987487759765,
+   "majority": 0.9679033837449679,
+   "n": 9191,
+   "classes": 15,
+   "per_class": {
+    "Cigarette": {
+     "n": 164,
+     "n_env": 3,
+     "acc": 0.7926829268292683,
+     "majority": 0.6036585365853658
+    },
+    "Clear plastic bottle": {
+     "n": 1034,
+     "n_env": 3,
+     "acc": 0.9700193423597679,
+     "majority": 0.9622823984526112
+    },
+    "Disposable plastic cup": {
+     "n": 23,
+     "n_env": 2,
+     "acc": 0.7391304347826086,
+     "majority": 0.7391304347826086
+    },
+    "Drink can": {
+     "n": 31,
+     "n_env": 3,
+     "acc": 0.6774193548387096,
+     "majority": 0.5806451612903226
+    },
+    "Normal paper": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.35714285714285715,
+     "majority": 0.5
+    },
+    "Other carton": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.5714285714285714,
+     "majority": 0.5714285714285714
+    },
+    "Other plastic": {
+     "n": 4553,
+     "n_env": 2,
+     "acc": 0.9953876564902262,
+     "majority": 0.9953876564902262
+    },
+    "Other plastic bottle": {
+     "n": 510,
+     "n_env": 3,
+     "acc": 0.9862745098039216,
+     "majority": 0.9764705882352941
+    },
+    "Other plastic wrapper": {
+     "n": 48,
+     "n_env": 3,
+     "acc": 0.6041666666666666,
+     "majority": 0.5833333333333334
+    },
+    "Paper cup": {
+     "n": 12,
+     "n_env": 2,
+     "acc": 0.6666666666666666,
+     "majority": 0.5833333333333334
+    },
+    "Plastic bottle cap": {
+     "n": 43,
+     "n_env": 3,
+     "acc": 0.5813953488372093,
+     "majority": 0.5348837209302325
+    },
+    "Plastic film": {
+     "n": 79,
+     "n_env": 4,
+     "acc": 0.759493670886076,
+     "majority": 0.6455696202531646
+    },
+    "Plastic straw": {
+     "n": 16,
+     "n_env": 2,
+     "acc": 0.6875,
+     "majority": 0.625
+    },
+    "Styrofoam piece": {
+     "n": 2555,
+     "n_env": 2,
+     "acc": 0.9972602739726028,
+     "majority": 0.9972602739726028
+    },
+    "Unlabeled litter": {
+     "n": 95,
+     "n_env": 3,
+     "acc": 0.7894736842105263,
+     "majority": 0.5789473684210527
+    }
+   }
+  },
+  "zc": {
+   "acc": 0.9872701555869873,
+   "majority": 0.9679033837449679,
+   "n": 9191,
+   "classes": 15,
+   "per_class": {
+    "Cigarette": {
+     "n": 164,
+     "n_env": 3,
+     "acc": 0.9207317073170732,
+     "majority": 0.6036585365853658
+    },
+    "Clear plastic bottle": {
+     "n": 1034,
+     "n_env": 3,
+     "acc": 0.9864603481624759,
+     "majority": 0.9622823984526112
+    },
+    "Disposable plastic cup": {
+     "n": 23,
+     "n_env": 2,
+     "acc": 0.8260869565217391,
+     "majority": 0.7391304347826086
+    },
+    "Drink can": {
+     "n": 31,
+     "n_env": 3,
+     "acc": 0.7419354838709677,
+     "majority": 0.5806451612903226
+    },
+    "Normal paper": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.5714285714285714,
+     "majority": 0.5
+    },
+    "Other carton": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.8571428571428571,
+     "majority": 0.5714285714285714
+    },
+    "Other plastic": {
+     "n": 4553,
+     "n_env": 2,
+     "acc": 0.9969251043268175,
+     "majority": 0.9953876564902262
+    },
+    "Other plastic bottle": {
+     "n": 510,
+     "n_env": 3,
+     "acc": 0.9901960784313726,
+     "majority": 0.9764705882352941
+    },
+    "Other plastic wrapper": {
+     "n": 48,
+     "n_env": 3,
+     "acc": 0.875,
+     "majority": 0.5833333333333334
+    },
+    "Paper cup": {
+     "n": 12,
+     "n_env": 2,
+     "acc": 0.9166666666666666,
+     "majority": 0.5833333333333334
+    },
+    "Plastic bottle cap": {
+     "n": 43,
+     "n_env": 3,
+     "acc": 0.7441860465116279,
+     "majority": 0.5348837209302325
+    },
+    "Plastic film": {
+     "n": 79,
+     "n_env": 4,
+     "acc": 0.8607594936708861,
+     "majority": 0.6455696202531646
+    },
+    "Plastic straw": {
+     "n": 16,
+     "n_env": 2,
+     "acc": 0.75,
+     "majority": 0.625
+    },
+    "Styrofoam piece": {
+     "n": 2555,
+     "n_env": 2,
+     "acc": 0.9972602739726028,
+     "majority": 0.9972602739726028
+    },
+    "Unlabeled litter": {
+     "n": 95,
+     "n_env": 3,
+     "acc": 0.8842105263157894,
+     "majority": 0.5789473684210527
+    }
+   }
+  }
+ },
+ "runs/e5_ablate_no_transplant": {
+  "z": {
+   "acc": 0.9735610923729736,
+   "majority": 0.9679033837449679,
+   "n": 9191,
+   "classes": 15,
+   "per_class": {
+    "Cigarette": {
+     "n": 164,
+     "n_env": 3,
+     "acc": 0.725609756097561,
+     "majority": 0.6036585365853658
+    },
+    "Clear plastic bottle": {
+     "n": 1034,
+     "n_env": 3,
+     "acc": 0.9709864603481625,
+     "majority": 0.9622823984526112
+    },
+    "Disposable plastic cup": {
+     "n": 23,
+     "n_env": 2,
+     "acc": 0.7391304347826086,
+     "majority": 0.7391304347826086
+    },
+    "Drink can": {
+     "n": 31,
+     "n_env": 3,
+     "acc": 0.6774193548387096,
+     "majority": 0.5806451612903226
+    },
+    "Normal paper": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.35714285714285715,
+     "majority": 0.5
+    },
+    "Other carton": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.5,
+     "majority": 0.5714285714285714
+    },
+    "Other plastic": {
+     "n": 4553,
+     "n_env": 2,
+     "acc": 0.9953876564902262,
+     "majority": 0.9953876564902262
+    },
+    "Other plastic bottle": {
+     "n": 510,
+     "n_env": 3,
+     "acc": 0.9764705882352941,
+     "majority": 0.9764705882352941
+    },
+    "Other plastic wrapper": {
+     "n": 48,
+     "n_env": 3,
+     "acc": 0.5833333333333334,
+     "majority": 0.5833333333333334
+    },
+    "Paper cup": {
+     "n": 12,
+     "n_env": 2,
+     "acc": 0.5833333333333334,
+     "majority": 0.5833333333333334
+    },
+    "Plastic bottle cap": {
+     "n": 43,
+     "n_env": 3,
+     "acc": 0.5348837209302325,
+     "majority": 0.5348837209302325
+    },
+    "Plastic film": {
+     "n": 79,
+     "n_env": 4,
+     "acc": 0.7468354430379747,
+     "majority": 0.6455696202531646
+    },
+    "Plastic straw": {
+     "n": 16,
+     "n_env": 2,
+     "acc": 0.625,
+     "majority": 0.625
+    },
+    "Styrofoam piece": {
+     "n": 2555,
+     "n_env": 2,
+     "acc": 0.9972602739726028,
+     "majority": 0.9972602739726028
+    },
+    "Unlabeled litter": {
+     "n": 95,
+     "n_env": 3,
+     "acc": 0.7368421052631579,
+     "majority": 0.5789473684210527
+    }
+   }
+  },
+  "zc": {
+   "acc": 0.9824828636709825,
+   "majority": 0.9679033837449679,
+   "n": 9191,
+   "classes": 15,
+   "per_class": {
+    "Cigarette": {
+     "n": 164,
+     "n_env": 3,
+     "acc": 0.8353658536585366,
+     "majority": 0.6036585365853658
+    },
+    "Clear plastic bottle": {
+     "n": 1034,
+     "n_env": 3,
+     "acc": 0.9816247582205029,
+     "majority": 0.9622823984526112
+    },
+    "Disposable plastic cup": {
+     "n": 23,
+     "n_env": 2,
+     "acc": 0.782608695652174,
+     "majority": 0.7391304347826086
+    },
+    "Drink can": {
+     "n": 31,
+     "n_env": 3,
+     "acc": 0.5806451612903226,
+     "majority": 0.5806451612903226
+    },
+    "Normal paper": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.5714285714285714,
+     "majority": 0.5
+    },
+    "Other carton": {
+     "n": 14,
+     "n_env": 2,
+     "acc": 0.7857142857142857,
+     "majority": 0.5714285714285714
+    },
+    "Other plastic": {
+     "n": 4553,
+     "n_env": 2,
+     "acc": 0.9964858335163629,
+     "majority": 0.9953876564902262
+    },
+    "Other plastic bottle": {
+     "n": 510,
+     "n_env": 3,
+     "acc": 0.984313725490196,
+     "majority": 0.9764705882352941
+    },
+    "Other plastic wrapper": {
+     "n": 48,
+     "n_env": 3,
+     "acc": 0.8125,
+     "majority": 0.5833333333333334
+    },
+    "Paper cup": {
+     "n": 12,
+     "n_env": 2,
+     "acc": 0.8333333333333334,
+     "majority": 0.5833333333333334
+    },
+    "Plastic bottle cap": {
+     "n": 43,
+     "n_env": 3,
+     "acc": 0.7209302325581395,
+     "majority": 0.5348837209302325
+    },
+    "Plastic film": {
+     "n": 79,
+     "n_env": 4,
+     "acc": 0.8354430379746836,
+     "majority": 0.6455696202531646
+    },
+    "Plastic straw": {
+     "n": 16,
+     "n_env": 2,
+     "acc": 0.8125,
+     "majority": 0.625
+    },
+    "Styrofoam piece": {
+     "n": 2555,
+     "n_env": 2,
+     "acc": 0.9972602739726028,
+     "majority": 0.9972602739726028
+    },
+    "Unlabeled litter": {
+     "n": 95,
+     "n_env": 3,
+     "acc": 0.8105263157894737,
+     "majority": 0.5789473684210527
+    }
+   }
+  }
+ }
+}

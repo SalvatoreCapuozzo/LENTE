@@ -1,0 +1,118 @@
+# Experiment queue for scripts/run_queue.py on the RTX 3080 Laptop (8 GB VRAM,
+# 14 GB RAM). Read again before every job: reorder or append while it runs.
+# A job is done when runs/<name>/test_metrics.json exists.
+#
+# Protocol unchanged (40 epochs x 4000 samples, optimizer batch 8, patience 8);
+# only how the batch is executed changes: batch 8 does not fit 8 GB at 1024 px,
+# so it runs as micro-batch 4 x 2 accumulated steps (SegFormer: 2 x 4, E6: 6 x 2).
+
+common:
+  train: [train.batch_size=4, train.accum_steps=2, train.num_workers=6, train.val_num_workers=3,
+          train.val_batch_size=4, train.val_prefetch=1, train.pin_memory=false]
+  # val batch 1 (15 Nov): at 4 the first validation OOMed in all 5 LODO jobs (see RESULTS.md)
+  segformer: [train.batch_size=2, train.accum_steps=4, train.val_batch_size=1, train.num_workers=6,
+              train.val_num_workers=3, train.pin_memory=false]
+  zeroshot: []
+
+jobs:
+  # E4 first: the full model, every ablation is a diff of it
+  - {name: e4_heldout_classes, config: configs/exp/e4_heldout_classes.yaml}
+  # E6 early: the Jetson work needs one trained 640-px model
+  - {name: e6_edge_640, config: configs/exp/e6_edge_640.yaml,
+     overrides: [train.batch_size=6, train.accum_steps=2, train.val_batch_size=12]}
+  # E3 leave-one-dataset-out
+  - {name: e3_lodo_taco, config: configs/exp/e3_lodo_taco.yaml}
+  - {name: e3_lodo_zerowaste, config: configs/exp/e3_lodo_zerowaste.yaml}
+  - {name: e3_lodo_uavvaste, config: configs/exp/e3_lodo_uavvaste.yaml}
+  - {name: e3_lodo_mju, config: configs/exp/e3_lodo_mju.yaml}
+  - {name: e3_lodo_bepli, config: configs/exp/e3_lodo_bepli.yaml}
+  # training-free references (cheap, fill several paper tables)
+  - {name: e4_heldout_classes__zeroshot, kind: zeroshot, config: configs/exp/e4_heldout_classes.yaml}
+  # E5 ablations of E4
+  - {name: e5_ablate_no_transplant, config: configs/exp/e5_ablate_no_transplant.yaml}
+  - {name: e5_ablate_no_adversary, config: configs/exp/e5_ablate_no_adversary.yaml}
+  - {name: e5_ablate_no_mixstyle, config: configs/exp/e5_ablate_no_mixstyle.yaml}
+  # --- 13 Nov: paper refocused on DESCRIPTION (dense open-vocabulary attributes, search by
+  # text, five environments). Order = what the claims need first.
+  # open vs closed description head, then descriptor values never supervised (E7)
+  - {name: e5_ablate_probe, config: configs/exp/e5_ablate_probe.yaml}
+  - {name: e7_heldout_values, config: configs/exp/e7_heldout_values.yaml}
+  - {name: e5_ablate_no_dense, config: configs/exp/e5_ablate_no_dense.yaml}
+  # PENDING the within-class leakage probe (13 Nov): kept only if environment removal stays a claim
+  - {name: e5_ablate_no_debias, config: configs/exp/e5_ablate_no_debias.yaml}
+  # E1 in-domain references: does one model for five environments cost anything per dataset?
+  # E1 in-domain references (done or running)
+  - {name: e1_indomain_taco, config: configs/exp/e1_indomain_taco.yaml}
+  - {name: e1_indomain_zerowaste, config: configs/exp/e1_indomain_zerowaste.yaml}
+  - {name: e1_indomain_uavvaste, config: configs/exp/e1_indomain_uavvaste.yaml}
+  - {name: e1_indomain_mju, config: configs/exp/e1_indomain_mju.yaml}
+  # ======== 15 Nov 18:50: order = expected significance of the result (user request) ========
+  # 1. The state-of-the-art bar: SAM 3 zero-shot on the full test split, 16 prompts (4 waste words +
+  #    12 waste-object nouns; with the 4 waste words alone its presence head misses waste in non-litter
+  #    scenes such as an office). Decides how the segmentation claim is framed. ~1 h.
+  - {name: e4_heldout_classes__zeroshot_sam3obj, kind: zeroshot, config: configs/exp/e4_heldout_classes.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, where], max_attempts: 2}
+  # 2. SAM 3 as an offline teacher at a new site (E9): SAM 3 labels the target's train/val images
+  #    (real labels never used), then the LODO model is fine-tuned on them plus the four labelled
+  #    datasets. Can the 34 M edge model reach or pass SAM 3 where TrashScribe-LODO fails? Worst
+  #    gaps first: MJU-Waste (LODO 0.055), UAVVaste (0.262), BePLi v2 (0.282). ~0.5 h + ~2 h each.
+  - {name: e3_lodo_mju__zeroshot_sam3obj, kind: zeroshot, config: configs/exp/e3_lodo_mju.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, pseudo], max_attempts: 2}
+  - {name: e9_sam3_mju, config: configs/exp/e9_sam3_mju.yaml}
+  - {name: e3_lodo_uavvaste__zeroshot_sam3obj, kind: zeroshot, config: configs/exp/e3_lodo_uavvaste.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, pseudo], max_attempts: 2}
+  - {name: e9_sam3_uavvaste, config: configs/exp/e9_sam3_uavvaste.yaml}
+  - {name: e3_lodo_bepli__zeroshot_sam3obj, kind: zeroshot, config: configs/exp/e3_lodo_bepli.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, pseudo], max_attempts: 2}
+  - {name: e9_sam3_bepli, config: configs/exp/e9_sam3_bepli.yaml}
+  # 3. E8: dense head distilled from CLIP crop embeddings, on E7 (unseen classes AND unseen values):
+  #    can one forward pass describe and name new things like CLIP does? ~7 h.
+  - {name: e8_clip_distill, config: configs/exp/e8_clip_distill.yaml}
+  # 3b. (16 Nov) SAM 3 re-evaluated with the same half-image rule as the Grounding DINO boxes and the
+  #    E9 teacher labels (the first run counted whole-scene masks as waste; it is kept). Both variants
+  #    are written (where_sam3 raw, where_sam3_area filtered). Decides how E9 compares with SAM 3. ~1 h.
+  - {name: e4_heldout_classes__zeroshot_sam3obj_area, kind: zeroshot, config: configs/exp/e4_heldout_classes.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, where, --tag, area], max_attempts: 2}
+  # 4. Supervised baseline under the same protocol where TrashScribe fails: is the MJU failure the
+  #    data's or the model's? (all 5 SegFormer jobs OOMed on 15 Nov; fixed, max_attempts 6) ~7.7 h.
+  - {name: e3_lodo_mju__segformer_mit-b2, kind: segformer, config: configs/exp/e3_lodo_mju.yaml, max_attempts: 6}
+  # 5. E3b: generic waste-free indoor negatives (COCO), no target images at all. ~6.3 h.
+  - {name: e3b_lodo_mju_negatives, config: configs/exp/e3b_lodo_mju_negatives.yaml}
+  # ======== 17 Nov 11:45: reordered after the fair SAM 3 numbers (masks <= half image: UAVVaste 0.424,
+  # MJU 0.221, BePLi 0.424; E9 reached 0.375 / 0.231 / 0.398) and SegFormer-MJU (0.104: the MJU
+  # failure is the protocol's, not TrashScribe's) ========
+  # 6. E9 on the two sites where the LODO model is already close to SAM 3 (TACO 0.630 vs 0.713-0.759,
+  #    ZeroWaste-f 0.747 vs 0.783-0.793): completes the SAM 3-teacher column of the main table. ~6 h.
+  - {name: e3_lodo_taco__zeroshot_sam3obj, kind: zeroshot, config: configs/exp/e3_lodo_taco.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, pseudo], max_attempts: 2}
+  - {name: e9_sam3_taco, config: configs/exp/e9_sam3_taco.yaml}
+  # 6b. (17 Nov, user goal: an edge model equal to or better than SAM 3) E10: 10 labelled images of the new
+  #    site. Does a handful of labels put the 34 M edge model at or above SAM 3 (848 M) everywhere?
+  #    Largest gaps to SAM 3 first. ~1.2 h each.
+  - {name: e10_k10_uavvaste, config: configs/exp/e10_k10_uavvaste.yaml}
+  - {name: e10_k10_bepli, config: configs/exp/e10_k10_bepli.yaml}
+  - {name: e10_k10_taco, config: configs/exp/e10_k10_taco.yaml}
+  - {name: e10_k10_zerowaste, config: configs/exp/e10_k10_zerowaste.yaml}
+  - {name: e10_k10_mju, config: configs/exp/e10_k10_mju.yaml}
+  # 6c. Rule fixed with E10: a site still below SAM 3 with 10 images gets 50 (UAVVaste: 0.289 vs 0.424).
+  - {name: e10_k50_uavvaste, config: configs/exp/e10_k50_uavvaste.yaml}
+  - {name: e3_lodo_zerowaste__zeroshot_sam3obj, kind: zeroshot, config: configs/exp/e3_lodo_zerowaste.yaml,
+     args: [--detector, sam3, --sam3-prompt-set, objects16, --tasks, pseudo], max_attempts: 2}
+  - {name: e9_sam3_zerowaste, config: configs/exp/e9_sam3_zerowaste.yaml}
+  # 7. Remaining zero-shot columns (cheap): SAM 3 with the 4 waste words (both mask rules), Grounding DINO.
+  - {name: e4_heldout_classes__zeroshot_sam3, kind: zeroshot, config: configs/exp/e4_heldout_classes.yaml,
+     args: [--detector, sam3, --tasks, where], max_attempts: 2}
+  - {name: e4_heldout_classes__zeroshot_gdino, kind: zeroshot, config: configs/exp/e4_heldout_classes.yaml,
+     args: [--detector, gdino, --tasks, where], max_attempts: 2}
+  # 8. Supervised baseline on the weak transfers (SegFormer took 11 h on MJU: 40 epochs, no early stop).
+  - {name: e3_lodo_uavvaste__segformer_mit-b2, kind: segformer, config: configs/exp/e3_lodo_uavvaste.yaml, max_attempts: 6}
+  - {name: e3_lodo_bepli__segformer_mit-b2, kind: segformer, config: configs/exp/e3_lodo_bepli.yaml, max_attempts: 6}
+  # 9. Does adding description cost segmentation? (LENTE recipe, no descriptor head)
+  - {name: e5_ablate_lente_rgb, config: configs/exp/e5_ablate_lente_rgb.yaml}
+  # 10. Table completion: E1 BePLi, SegFormer where transfer already works.
+  - {name: e1_indomain_bepli, config: configs/exp/e1_indomain_bepli.yaml}
+  - {name: e3_lodo_taco__segformer_mit-b2, kind: segformer, config: configs/exp/e3_lodo_taco.yaml, max_attempts: 6}
+  - {name: e3_lodo_zerowaste__segformer_mit-b2, kind: segformer, config: configs/exp/e3_lodo_zerowaste.yaml, max_attempts: 6}
+  # REMOVED 13 Nov (do not serve the refocused claims; configs kept):
+  #   e5_ablate_lora8, e5_ablate_adapters_both (adapter variants), e5_ablate_geometry (depth gate),
+  #   e2_multi_domain (E4 is the all-datasets model; E2 differs only by the held-out-class images)

@@ -148,3 +148,47 @@ def test_sam2_backbone_shapes_and_frozen_core():
     frozen = [p for n, p in enc.named_parameters() if ".A." not in n and ".B." not in n
               and "adapter" not in n]
     assert all(not p.requires_grad for p in frozen)
+
+
+def test_clip_field_off_by_default_and_boxes_follow_masks():
+    """E8: the distilled head exists only when asked for; object_boxes gives pixel boxes of
+    stride-4 masks in the order of pool_objects (empty masks -> empty boxes)."""
+    from trashscribe.clip_teacher import object_boxes
+    m, _ = _tiny_model()
+    assert m.clip_field is None and "clip" not in m(torch.randn(1, 3, 128, 128))
+    m2 = TrashScribe(ModelConfig(backbone="tiny", image_size=128, clip_field=True), text_dim=64,
+                     n_fields=len(SCHEMA.fields), n_env=8)
+    out = m2(torch.randn(2, 3, 128, 128))
+    assert out["clip"].shape[:2] == (2, 512) and out["clip"].shape[-2:] == out["desc"].shape[-2:]
+    a = torch.zeros(2, 32, 32)
+    a[0, 2:5, 3:9] = 1
+    b = torch.zeros(1, 32, 32)
+    bx, bi = object_boxes([a, b])
+    assert bx.tolist() == [[12, 8, 36, 20], [0, 0, 0, 0], [0, 0, 0, 0]] and bi.tolist() == [0, 0, 1]
+
+
+def test_extra_datasets_stay_in_their_config(tmp_path):
+    """E3b: datasets added by one config never reach configs that inherit the registry."""
+    from trashscribe.engine import load_config
+    base = load_config(ROOT / "configs/exp/e4_heldout_classes.yaml")
+    neg = load_config(ROOT / "configs/exp/e3b_lodo_mju_negatives.yaml")
+    assert "coco_neg" not in {d["name"] for d in base["datasets"]}
+    assert "coco_neg" in {d["name"] for d in neg["datasets"]} and "mju" not in neg["train_datasets"]
+
+
+def test_few_shot_subsample_and_share():
+    """E10: a seeded subset keeps n items; a fixed share gives that dataset exactly that sampling mass."""
+    from trashscribe.data.adapters import BaseAdapter
+    from trashscribe.data.registry import subsample_adapter
+
+    class Fake(BaseAdapter):
+        def __init__(self, name, n):
+            self.name, self.items, self.entries_per_item = name, list(range(n)), [set() for _ in range(n)]
+
+    a, b = Fake("site", 40), Fake("other", 200)
+    keep = subsample_adapter(a, 10, seed=3)
+    assert len(a) == 10 and a.items == keep == subsample_adapter(Fake("site", 40), 10, seed=3)
+    ds = MultiDataset([a, b], Canonicalizer(SCHEMA, synthetic_atlas(), 64, False))
+    w = ds.sample_weights(0.5, {"site": 0.25}).numpy()
+    mass_a = w[[k for k, (ai, _) in enumerate(ds.index) if ai == 0]].sum()
+    assert abs(mass_a - 0.25) < 1e-9 and abs(w.sum() - 1.0) < 1e-9

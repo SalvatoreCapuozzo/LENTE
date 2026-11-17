@@ -1,0 +1,22 @@
+# E9 (17 Nov): SAM 3 as an OFFLINE TEACHER at a new site. The leave-one-out model for zerowaste (E3) is
+# fine-tuned on the four labelled datasets plus the zerowaste TRAIN images labelled by SAM 3
+# (scripts/baseline_zeroshot.py --detector sam3 --tasks pseudo; the real labels are never used).
+# Selection: the four validation sets plus the SAM 3-labelled zerowaste val images. Test: zerowaste test, real
+# labels. Same rule and schedule as e9_sam3_{mju,uavvaste,bepli}.
+_base_: e3_lodo_zerowaste.yaml
+run_name: e9_sam3_zerowaste
+extra_datasets:
+  - name: zerowaste_sam3
+    type: masks
+    surroundings: a conveyor belt in a recycling plant
+    ignore_value: 255
+    splits:
+      train: {images_dir: _pseudo/sam3/zerowaste/train/images, masks_dir: _pseudo/sam3/zerowaste/train/masks}
+      val:   {images_dir: _pseudo/sam3/zerowaste/val/images, masks_dir: _pseudo/sam3/zerowaste/val/masks}
+train_datasets: [taco, uavvaste, mju, bepli, zerowaste_sam3]
+val_datasets: [taco, uavvaste, mju, bepli, zerowaste_sam3]
+test_datasets: [zerowaste]
+train:
+  init_from: runs/e3_lodo_zerowaste/best.pt
+  epochs: 12
+  patience: 4

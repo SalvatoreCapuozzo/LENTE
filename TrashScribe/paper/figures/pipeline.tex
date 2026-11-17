@@ -1,0 +1,56 @@
+% End-to-end data flow of TrashScribe (included by main.tex). Natural width ~14 cm.
+% Note: in sn-jnl \footnotesize is 7 pt (and \scriptsize 9 pt).
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners=2pt, align=center, text width=3.15cm, inner sep=2.5pt,
+              minimum height=8mm, font=\footnotesize},
+  trn/.style={box, fill=blue!8},
+  net/.style={box, fill=gray!14},
+  dev/.style={box, fill=green!9},
+  txt/.style={box, fill=orange!13, dashed},
+  ar/.style={-{Latex[length=1.6mm]}, semithick},
+  tar/.style={ar, dashed, blue!60!black},
+  xar/.style={ar, dashed, orange!70!black}]
+\def\cA{0}\def\cB{3.6}\def\cC{7.2}\def\cD{10.8}
+% ---------------------------------------------------------------- inputs (left column)
+\node[trn] (a1) at (\cA, 3.15) {\textbf{5 public datasets}\\TACO, ZeroWaste-f,\\UAVVaste, MJU-Waste,\\BePLi v2};
+\node[trn] (a2) at (\cA, 1.75) {\textbf{adapters}\\native labels $\to$ atlas\\entries; held-out classes\\removed};
+\node[trn] (a3) at (\cA, 0.45) {\textbf{training batch}\\balanced sampling,\\cross-dataset transplant};
+\node[dev] (d0) at (\cA, -1.75) {\textbf{camera frame}\\on the device, letterboxed\\to $3\times S\times S$};
+% ---------------------------------------------------------------- network
+\node[net, minimum height=33mm] (enc) at (\cB, -0.75) {\textbf{SAM2.1-Hiera-Tiny}\\frozen, with zero-init\\adapters; MixStyle in\\training; optional\\depth gate\\[3pt]features at $S/4$, $S/8$, $S/16$\\(32, 64, 256 channels)};
+\node[net] (dec) at (\cC, 0.45) {\textbf{waste decoder}\\$P(\mathrm{waste})$, $1\times\frac{S}{4}\times\frac{S}{4}$};
+\node[net] (cont) at (\cC, -0.68) {\textbf{contour head}\\$P(\mathrm{contour})$, $1\times\frac{S}{4}\times\frac{S}{4}$};
+\node[net] (desc) at (\cC, -1.9) {\textbf{descriptor field} $F$\\$512\times\frac{S}{8}\times\frac{S}{8}$,\\in the CLIP text space};
+\node[draw, dashed, rounded corners=3pt, inner sep=4pt, fit=(enc)(dec)(cont)(desc),
+      label={[font=\footnotesize, anchor=south west, inner sep=1.5pt]north west:one graph: ONNX $\to$ TensorRT FP16}] (graph) {};
+% ---------------------------------------------------------------- right column
+\node[trn] (loss) at (\cD, 2.4) {\textbf{losses} (training only)\\mask, contours,\\descriptors, dense cells,\\environment adversary};
+\node[dev] (inst) at (\cD, -0.12) {\textbf{instances}\\seeds: waste $\wedge\,\neg$contour,\\nearest-seed fill};
+\node[dev] (pool) at (\cD, -1.9) {\textbf{pooling}\\$z^{\mathrm{int}}$ inside the mask,\\$z^{\mathrm{ctx}}$ in a ring around it};
+% ---------------------------------------------------------------- outputs (right to left)
+\node[dev] (post) at (\cC, -3.65) {\textbf{descriptor posterior}\\$\tau_f\cos(z, W_t e_d)+b_f$};
+\node[dev] (name) at (\cB, -3.65) {\textbf{naming}\\agreement, prototype,\\prose; or \emph{set aside}};
+\node[dev, very thick] (rep) at (\cA, -3.65) {\textbf{report} per frame\\coverage, count,\\descriptions, names,\\streams, composition};
+% ---------------------------------------------------------------- text, offline
+\node[txt] (t1) at (\cA, -5.2) {\textbf{schema} (9 fields) and\\\textbf{atlases} (classes,\\streams): plain text};
+\node[txt] (t2) at (\cB, -5.2) {\textbf{CLIP ViT-B/16}\\text encoder, frozen,\\workstation only};
+\node[txt] (t3) at (\cC, -5.2) {\textbf{atlas cache}\\phrases $W_t e_d$, profiles,\\prototypes, prose};
+% ---------------------------------------------------------------- arrows
+\draw[tar] (a1) -- (a2);
+\draw[tar] (a2) -- (a3);
+\draw[tar] (a3.east) -- (a3.east -| enc.west);
+\draw[ar] (d0.east) -- (d0.east -| enc.west);
+\foreach \h in {dec, cont, desc} \draw[ar] (\h.west -| enc.east) -- (\h.west);
+\draw[tar] (dec.north) |- (loss.west);
+\draw[ar] (dec.east) -- ++(2.4mm, 0) |- (inst.west);
+\draw[ar] (cont.east) -- ++(2.4mm, 0) |- (inst.west);
+\draw[ar] (desc.east) -- (pool.west);
+\draw[ar] (inst) -- (pool);
+\draw[ar] (pool.south) |- (post.east);
+\draw[ar] (post) -- (name);
+\draw[ar] (name) -- (rep);
+\draw[xar] (t1) -- (t2);
+\draw[xar] (t2) -- (t3);
+\draw[xar] (t3) -- (post);
+\draw[xar] (t3.north west) -- (name.south east);
+\end{tikzpicture}

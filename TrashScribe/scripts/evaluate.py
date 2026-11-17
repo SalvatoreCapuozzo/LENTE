@@ -11,16 +11,24 @@ every dataset) are loaded through an EXTENDED schema: no retraining.
 import _bootstrap  # noqa: F401
 import argparse
 import json
+import time
 from pathlib import Path
 
 from torch.utils.data import DataLoader
 
 from trashscribe.data.canonical import Canonicalizer, collate
 from trashscribe.data.mixing import MultiDataset
-from trashscribe.data.registry import build_split
+from trashscribe.data.registry import build_split, trained_entries
 from trashscribe.engine import _p, evaluate, load_run
 from trashscribe.naming import Namer, build_cache, calibrate_seen_penalty
+from trashscribe.progress import Progress
 from trashscribe.schema import Atlas
+
+
+def _loader_kw(cfg):
+    tc = cfg["train"]
+    nw = int(tc.get("val_num_workers", tc.get("num_workers", 4)))
+    return {"num_workers": nw, **({"prefetch_factor": int(tc.get("val_prefetch", 2))} if nw > 0 else {})}
 
 
 def evaluate_run(run_dir, split="test", n_perm=None, with_novel=True):
@@ -34,12 +42,12 @@ def evaluate_run(run_dir, split="test", n_perm=None, with_novel=True):
                            strict=cfg.get("strict_atlas", True))
     train_ad = build_split(cfg.get("datasets", []), cfg.get("train_datasets"), "train", atlas, root, holdout,
                            cfg.get("max_items"), strict=cfg.get("strict_atlas", True))
-    seen = set().union(*[a.entries_present() for a in train_ad]) if train_ad else set()
+    seen = trained_entries(train_ad)              # eval-only entries (novel atlas) are never seen
     present = set().union(*[a.entries_present() for a in adapters]) if adapters else set()
     unseen = holdout | (present - seen)          # LODO: classes of an unseen dataset are unseen too
     canon = Canonicalizer(schema, atlas, model.cfg.image_size, False)
     dl = DataLoader(MultiDataset(adapters, canon), batch_size=cfg["train"].get("val_batch_size", 8),
-                    collate_fn=collate, num_workers=cfg["train"].get("num_workers", 4))
+                    collate_fn=collate, **_loader_kw(cfg))
     # naming atlas = training atlases (+ novel ones), schema extended with their new values
     atlases = [atlas] + ([Atlas.load(_p(p)) for p in cfg.get("novel_atlases", [])] if with_novel else [])
     full = Atlas.merge(atlases, "eval")
@@ -53,17 +61,22 @@ def evaluate_run(run_dir, split="test", n_perm=None, with_novel=True):
     val_ad = build_split(cfg.get("datasets", []), cfg.get("val_datasets") or cfg.get("train_datasets"), "val", atlas,
                          root, holdout, cfg.get("max_items"), strict=cfg.get("strict_atlas", True))
     dl_val = DataLoader(MultiDataset(val_ad, canon), batch_size=cfg["train"].get("val_batch_size", 8),
-                        collate_fn=collate, num_workers=cfg["train"].get("num_workers", 4))
-    raw = evaluate(model, dl_val, schema, dev, amp=cfg["train"].get("amp", True), return_raw=True).get("_raw")
+                        collate_fn=collate, **_loader_kw(cfg))
+    prog = Progress(run_dir)
+    prog(phase=f"{split}: calibration on val", eval_started=time.time())
+    raw = evaluate(model, dl_val, schema, dev, amp=cfg["train"].get("amp", True), return_raw=True,
+                   progress=prog).get("_raw")
     calib = {"gamma": 0.0}
     if raw is not None:
         calib = calibrate_seen_penalty(namer, raw["z"], raw["zc"], raw["entries"], seen,
                                        keep=cfg.get("eval", {}).get("calib_keep", 0.9))
     namer.set_seen(seen, 0.0)
-    res0 = evaluate(model, dl, schema, dev, namer=namer, seen=seen, unseen=unseen, n_perm=10,
+    prog(phase=f"{split}: default naming")
+    res0 = evaluate(model, dl, schema, dev, namer=namer, seen=seen, unseen=unseen, n_perm=10, progress=prog,
                     amp=cfg["train"].get("amp", True))
     namer.set_seen(seen, calib["gamma"])
-    res = evaluate(model, dl, schema, dev, namer=namer, seen=seen, unseen=unseen,
+    prog(phase=f"{split}: calibrated naming")
+    res = evaluate(model, dl, schema, dev, namer=namer, seen=seen, unseen=unseen, progress=prog,
                    retrieval_entries=sorted(unseen | seen), n_perm=n_perm or cfg.get("eval", {}).get("n_perm", 2000),
                    amp=cfg["train"].get("amp", True))
     res["summary"] = {
@@ -83,6 +96,7 @@ def evaluate_run(run_dir, split="test", n_perm=None, with_novel=True):
         "extended_values": [v for v in ext.flat if v not in schema.flat],
     }
     (run_dir / f"{split}_metrics.json").write_text(json.dumps(res, indent=1, default=float))
+    prog(phase="done", eval_done=time.time())
     return res
 
 
