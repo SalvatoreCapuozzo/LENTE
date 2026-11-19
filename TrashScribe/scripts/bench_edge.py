@@ -64,6 +64,7 @@ else:
     backend, size = TorchBackend(model, dev, half=a.half), model.cfg.image_size
     name = f"torch:{dev.type}{':fp16' if a.half and dev.type == 'cuda' else ''}"
 cache = a.cache or cache
+frames, real_frames = [], []
 
 x = np.random.randn(1, 3, size, size).astype(np.float32)
 sync = (lambda: torch.cuda.synchronize()) if torch.cuda.is_available() else (
@@ -89,32 +90,40 @@ if torch.cuda.is_available():
 if cache:
     from trashscribe.naming import AtlasCache
     pipe = EdgePipeline(backend, AtlasCache.load(cache), size)
-    frames = []
     if a.images:
         import cv2
         for p in sorted(Path(a.images).glob("*"))[:50]:
             im = cv2.imread(str(p))
             if im is not None:
                 frames.append(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+    real_frames = list(frames)
     frames = frames or [np.random.randint(0, 255, (720, 1280, 3), np.uint8)]
-    tt = []
+    tt, counts = [], []
     for i in range(min(a.iters, 50)):
-        pipe(frames[i % len(frames)])
+        counts.append(pipe(frames[i % len(frames)])["count"])
         tt.append(pipe.timing)
     res["pipeline_ms"] = {k: float(np.mean([t[k] for t in tt])) for k in tt[0]}
+    res["pipeline_frames"] = f"{len(real_frames)} images from {a.images}" if real_frames else "1 random 720x1280 frame"
+    res["pipeline_mean_objects"] = float(np.mean(counts)) if counts else None
 
 if a.check and a.engine and a.onnx:
+    from trashscribe.edge_runtime import preprocess
     ref = OrtBackend(a.onnx, ["CPUExecutionProvider"])
     rng = np.random.default_rng(0)
-    diffs, agree = [], []
-    for _ in range(5):
-        xi = rng.standard_normal((1, 3, size, size)).astype(np.float32)
+    real = [preprocess(f, size)[0] for f in real_frames[:5]]
+    inputs = real or [rng.standard_normal((1, 3, size, size)).astype(np.float32) for _ in range(5)]
+    diffs, agree, ious = [], [], []
+    for xi in inputs:
         r, g = ref(xi), backend(xi)
         diffs.append([float((ri.float() - gi.cpu().float()).abs().max()) for ri, gi in zip(r, g)])
         pr, pg = r[0] > 0.5, g[0].cpu() > 0.5
         agree.append(float((pr == pg).float().mean()))
-    res["check_vs_ort_fp32"] = {"max_abs_diff[waste,contour,desc]": np.max(diffs, 0).tolist(),
-                                "waste_mask_pixel_agreement": float(np.mean(agree))}
+        union = float((pr | pg).sum())
+        ious.append(float((pr & pg).sum()) / union if union else 1.0)
+    res["check_vs_ort_fp32"] = {"inputs": f"{len(real)} real frames" if real else "5 random-normal tensors",
+                                "max_abs_diff[waste,contour,desc]": np.max(diffs, 0).tolist(),
+                                "waste_mask_pixel_agreement": float(np.mean(agree)),
+                                "waste_mask_iou_engine_vs_fp32": float(np.mean(ious))}
 print(json.dumps(res, indent=1))
 out = Path(a.out or (Path(a.run) / "bench" if a.run else Path("runs/bench")))
 out.mkdir(parents=True, exist_ok=True)

@@ -62,12 +62,16 @@ class OrtBackend:
 
 
 class TrtBackend:
-    """TensorRT 10 engine with torch CUDA tensors as I/O buffers (JetPack 6)."""
+    """TensorRT engine with torch CUDA tensors as I/O buffers. Named-tensor API: TensorRT >= 8.5
+    (JetPack 5.1: TRT 8.5, JetPack 6: TRT 10)."""
 
     def __init__(self, engine_path):
         import tensorrt as trt
         self.trt = trt
         logger = trt.Logger(trt.Logger.WARNING)
+        # TRT 8.5 builds InstanceNormalization as a plugin: register the standard plugins
+        # (trtexec does it implicitly) or deserialization fails with "IPluginCreator not found"
+        trt.init_libnvinfer_plugins(logger, "")
         with open(engine_path, "rb") as f:
             self.engine = trt.Runtime(logger).deserialize_cuda_engine(f.read())
         self.ctx = self.engine.create_execution_context()
