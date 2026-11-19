@@ -20,9 +20,10 @@
    ],
    "iou_gdino": 0.9745508982035929,
    "gdino_n": 3,
-   "iou_sam3": 0.9662969742651017,
-   "sam3_n": 3,
+   "iou_sam3": 0.9662002152852529,
+   "sam3_n": 5,
    "iou_trashscribe_lodo": 0.9665914706198303,
+   "iou_trashscribe_e10": 0.96593961534329,
    "iou_trashscribe": 0.966190833959429,
    "listed": [
     {
@@ -54,9 +55,10 @@
    ],
    "iou_gdino": 0.2858401772272744,
    "gdino_n": 3,
-   "iou_sam3": 0.9418931583880038,
-   "sam3_n": 46,
+   "iou_sam3": 0.9409004727962176,
+   "sam3_n": 68,
    "iou_trashscribe_lodo": 0.9177527883810769,
+   "iou_trashscribe_e10": 0.9559903080318587,
    "iou_trashscribe": 0.9744223417983492,
    "listed": [
     {
@@ -88,9 +90,10 @@
    ],
    "iou_gdino": 0.4891476971942827,
    "gdino_n": 4,
-   "iou_sam3": 0.6534059945504087,
-   "sam3_n": 6,
+   "iou_sam3": 0.6561822125813449,
+   "sam3_n": 13,
    "iou_trashscribe_lodo": 0.505775075987842,
+   "iou_trashscribe_e10": 0.5909980430528375,
    "iou_trashscribe": 0.5917400135409614,
    "listed": [
     {
@@ -122,9 +125,10 @@
    ],
    "iou_gdino": 0.7942019751513221,
    "gdino_n": 3,
-   "iou_sam3": 0.5197788175244576,
-   "sam3_n": 4,
+   "iou_sam3": 0.26854697102721686,
+   "sam3_n": 13,
    "iou_trashscribe_lodo": 0.14937012597480503,
+   "iou_trashscribe_e10": 0.5902074288470815,
    "iou_trashscribe": 0.9334600760456274,
    "listed": [
     {
@@ -159,6 +163,7 @@
    "iou_sam3": 0.8021854411055761,
    "sam3_n": 33,
    "iou_trashscribe_lodo": 0.6252992435124006,
+   "iou_trashscribe_e10": 0.645862618311311,
    "iou_trashscribe": 0.6803724532128699,
    "listed": [
     {
@@ -183,7 +188,19 @@
   "litter",
   "trash",
   "garbage",
-  "plastic waste"
+  "plastic waste",
+  "bottle",
+  "can",
+  "cup",
+  "plastic bag",
+  "food wrapper",
+  "carton",
+  "cardboard box",
+  "paper",
+  "bottle cap",
+  "plastic fragment",
+  "styrofoam piece",
+  "cigarette butt"
  ],
  "image_level_classes": [
   "cardboard",

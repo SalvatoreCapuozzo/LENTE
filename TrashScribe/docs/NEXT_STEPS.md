@@ -3,31 +3,23 @@
 Written 17 Nov 2026, 22:30. Check [RESULTS.md](../RESULTS.md) and `python scripts/progress.py` first: some items
 below may already be done. Deadline: **30 Nov 2026** (NCAA topical collection).
 
-## 0. Runs still in the queue (automatic; expected end about Fri 20 Nov evening)
+## 0. Runs still in the queue (19 Nov; expected end about Fri 20 Nov evening)
 
-In order (`configs/gpu_queue.yaml`, ordered by expected significance): E10 10-image runs on ZeroWaste-f and MJU
-(TACO was running at writing time), E10 50 images on UAVVaste, SAM 3 labels + E9 on ZeroWaste-f, SAM 3 4-word
-and Grounding DINO zero-shot columns, SegFormer-B2 LODO on UAVVaste and BePLi (about 11 h each), `e5_ablate_lente_rgb`,
-E1-BePLi, SegFormer on TACO and ZeroWaste-f.
-
-When a run finishes: the queue regenerates `paper/tables/*.tex` and RESULTS.md tables automatically; an agent
-must (a) add a dated journal entry to RESULTS.md with the reading, (b) update the paragraph text and the red
-`\tbd` notes in `paper/main.tex` (Results, "Cross-environment segmentation"), (c) recompile the paper and check
-the owner's style rules (no em dashes, no ", and").
+E1-BePLi (running), SegFormer-B2 LODO on TACO and ZeroWaste-f. All three fill empty cells of Table `tab:lodo`
+(regenerated automatically). When they finish: update the "Segmentation across environments" paragraph and remove
+its red `\tbd`; if SegFormer beats TrashScribe-LODO on TACO or ZeroWaste-f too, say so plainly in the paragraph and
+in the discussion. Re-run `python scripts/make_ladder_figure.py` only if a ladder run changes (none queued).
 
 ## 1. Decisions for the owner (ask, do not assume)
 
-1. **Reframe the paper** around what the evidence supports (see [CONTEXT.md](CONTEXT.md#what-the-paper-can-claim-today)).
-   Proposed title: "TrashScribe: Segmenting and Describing Waste across Environments on the Edge". Proposed
-   contributions: (i) the cross-environment benchmark; (ii) environment-specific negatives and the 243-photo fix;
-   (iii) the edge model against SAM 3 by amount of site data (Table `tab:ladder`); (iv) one-pass segmentation,
-   description and open reading (E8). Requires rewriting title, abstract, introduction, contributions,
-   discussion and conclusions; the Results section already follows the new findings. The owner asked on 17 Nov
-   whether to do it now or after the remaining runs: still open.
-2. **The claim "edge model ≥ SAM 3"** must carry its condition (site data used). If UAVVaste stays below SAM 3
-   with 50 labelled images, options: 100+ images; combine SAM 3 labels + labelled images + scale augmentation;
-   or state UAVVaste as the exception. Decide before writing the abstract.
-3. **Jetson measurements** (owner on the device): see [JETSON.md](JETSON.md). Include SAM 3 on the device if possible.
+1. The paper was reframed on 19 Nov (title "TrashScribe: Segmenting and Describing Waste across Environments on an
+   Edge Device"). Ask the owner to read the abstract, introduction and conclusions and confirm the framing.
+2. Jetson: re-run the suite with `sudo jetson_clocks` and `sudo tegrastats` (power, peak memory) and ≥ 3 GB free;
+   update Table `tab:edge` (hand-written in `paper/main.tex`) and the "On-device performance" paragraph.
+   SAM 3 on the device needs JetPack 6 (or a container with Python ≥ 3.10).
+3. Aerial litter is the one environment where the edge model does not reach SAM 3 with few labels. Options:
+   scale augmentation / tiling during training, unfreezing more of the encoder, or stating it as the limitation it
+   is now in the paper.
 
 ## 2. Engineering tasks (agent can do)
 
@@ -41,16 +33,13 @@ the owner's style rules (no em dashes, no ", and").
 4. Regenerate the literature comparison figure with a SegFormer column once its LODO runs exist
    (`python scripts/make_comparison.py run segformer` then `draw`, CPU, capped).
 
-## 3. Paper tasks
+## 3. Paper tasks (after the 19 Nov revision)
 
-* Abstract, introduction, contributions, conclusions: rewrite after decision 1 (currently old framing plus a
-  red note summarising the new findings).
-* Missing citations: zero-shot waste classification with CLIP/VLMs (red `\tbd` in Related work and in the
-  comparison section); `references.bib` entries flagged `VERIFY` (SAM 3 arXiv id and authors; "Don't waste SAM"
-  venue/year: an arXiv listing 2606.10696 is dated 2026, the bib says ESANN 2023).
-* Edge section and `tab:edge` from the Jetson measurements; JetPack/TensorRT versions in implementation details.
-* "A monitoring case" paragraph: re-read the same frames with a second municipality's atlas (no retraining).
-* Declarations: LLM-use statement, handling of faces and licence plates in street images, anonymised code URL.
+* Done on 19 Nov: abstract, introduction, related work, method, results, discussion, conclusions rewritten; all
+  VERIFY bibliography notes resolved; Jetson numbers in `tab:edge`; ladder figure; comparison figure aligned.
+* Still open: Jetson power / peak memory; LLM-use statement; handling of faces and licence plates in street
+  images (Declarations); anonymised code URL; the three remaining runs; a final read for the style rules
+  (no em dashes, no ", and": `grep -c ', and' paper/main.tex` must only hit the comment on line 6).
 * `docs/SOTA.md` dates from 5 Nov: update it with SAM 3, EfficientSAM3, GSA2Seg and the SAM 3-teacher papers.
 * Submission checklist and anonymisation: `paper/README.md`.
 

@@ -46,7 +46,9 @@ from trashscribe.naming import AtlasCache, Namer  # noqa: E402
 
 CACHE = Path(_p("paper/figures/comparison_cache"))
 QUERIES = ["a piece of litter", "trash", "garbage", "plastic waste", "a discarded bottle", "a discarded can"]
-SAM3_PROMPTS = ["litter", "trash", "garbage", "plastic waste"]
+# same 16 prompts and half-image rule as the SAM 3 baseline of the paper's tables (19 Nov)
+SAM3_PROMPTS = ["litter", "trash", "garbage", "plastic waste", "bottle", "can", "cup", "plastic bag", "food wrapper",
+                "carton", "cardboard box", "paper", "bottle cap", "plastic fragment", "styrofoam piece", "cigarette butt"]
 TRASHNET = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
 FIELDS = ("material", "rigidity", "optics", "shape")
 
@@ -211,6 +213,8 @@ def run_sam3(rows, cfg, thr=0.5):
             det = sp.post_process_instance_segmentation(out, threshold=thr, mask_threshold=0.5,
                                                         target_sizes=inp.get("original_sizes").tolist())[0]
             for m, sc in zip(det["masks"], det["scores"]):
+                if float(m.float().mean()) > 0.5:      # half-image rule of the paper's SAM 3 baseline
+                    continue
                 allm.append(np.packbits(m.numpy().astype(bool)))
                 alls.append(float(sc))
                 alll.append(q)
@@ -233,6 +237,21 @@ def run_lodo(rows, cfg):
         del m
         gc.collect()
     _save("lodo", res)
+
+
+@torch.no_grad()
+def run_e10(rows, cfg):
+    """TrashScribe adapted to the image's site with 10 labelled TRAIN images of it (E10); the shown images
+    are test images, never among the 10."""
+    res = []
+    for r in rows:
+        m, *_ = load_run(_p(f"runs/e10_k10_{r['ds']}"), device="cpu")
+        prob, *_ = predict(m, r["sample"].image, m.cfg.image_size)
+        res.append({"prob": prob.astype(np.float16)})
+        print("e10", r["ds"], flush=True)
+        del m
+        gc.collect()
+    _save("e10", res)
 
 
 @torch.no_grad()
@@ -267,21 +286,21 @@ def _unpack(b, shape):
 def draw(rows, cfg, out="paper/figures/comparison"):
     W_IN = 5.16
     plt.rcParams.update({"font.size": 6.5, "font.family": "DejaVu Sans"})
-    C = {k: torch.load(CACHE / f"{k}.pt", weights_only=False) for k in ("trashscribe", "clip", "gdino", "sam3", "lodo")
+    C = {k: torch.load(CACHE / f"{k}.pt", weights_only=False) for k in ("trashscribe", "clip", "gdino", "sam3", "lodo", "e10")
          if (CACHE / f"{k}.pt").exists()}
     seg = torch.load(CACHE / "segformer.pt", weights_only=False) if (CACHE / "segformer.pt").exists() else None
     has_seg = seg is not None and any(x is not None for x in seg)
     cols = ["Input, annotation\nand CLIP image label", "Grounding DINO\n→ SAM 2", "SAM 3\n(text prompt)"]
     if has_seg:
         cols.append("SegFormer-B2\n(dataset unseen)")
-    cols += ["TrashScribe\n(dataset unseen)", "TrashScribe\n(all datasets)"]
+    cols += ["TrashScribe\nno site data", "TrashScribe\n+ 10 site labels", "TrashScribe\nsite in training"]
     nc = len(cols)
     ratios = [r["sample"].image.shape[0] / r["sample"].image.shape[1] for r in rows]
     col_w = W_IN / nc
     Ht = col_w * sum(ratios) + 0.45
     fig, axes = plt.subplots(len(rows), nc, figsize=(W_IN, Ht),
                              gridspec_kw={"height_ratios": ratios, "wspace": 0.03, "hspace": 0.05})
-    fig.subplots_adjust(left=0.035, right=0.998, bottom=0.2 / Ht, top=1 - 0.25 / Ht)
+    fig.subplots_adjust(left=0.004, right=0.998, bottom=0.2 / Ht, top=1 - 0.25 / Ht)
     badge = dict(fc="black", alpha=0.65, lw=0, pad=0.8)
     holdout = set(cfg.get("holdout") or [])
     _, atlas = load_vocab(cfg)
@@ -315,7 +334,9 @@ def draw(rows, cfg, out="paper/figures/comparison"):
         ax = axes[ri, c]
         ax.imshow(base.astype(np.uint8))
         outline(ax, gt == 1, "#00e000", 0.6)
-        ax.set_ylabel(TITLES[r["ds"]], fontsize=6.5, fontweight="bold", labelpad=1.5)
+        # dataset name as a badge (a rotated label does not fit the short 16:9 rows)
+        ax.text(0.03, 0.95, TITLES[r["ds"]], transform=ax.transAxes, va="top", ha="left", fontsize=5.8,
+                fontweight="bold", color="black", bbox=dict(fc="white", alpha=0.85, lw=0, pad=0.8))
         # image-level CLIP (zero-shot waste classification): one label for the whole picture
         if "clip" in C:
             top = C["clip"][ri]["image_top"]
@@ -353,6 +374,10 @@ def draw(rows, cfg, out="paper/figures/comparison"):
         ax = axes[ri, c]
         if "lodo" in C:
             show(ax, C["lodo"][ri]["prob"].astype(np.float32) > 0.5, (230, 30, 30), key="iou_trashscribe_lodo")
+        c += 1
+        ax = axes[ri, c]
+        if "e10" in C:
+            show(ax, C["e10"][ri]["prob"].astype(np.float32) > 0.5, (230, 30, 30), key="iou_trashscribe_e10")
         c += 1
         # TrashScribe: instances, numbered objects
         ax = axes[ri, c]
@@ -451,7 +476,7 @@ def main():
     rows, cfg = samples()
     if a.cmd == "run":
         {"trashscribe": run_trashscribe, "clip": run_clip, "gdino": run_gdino, "sam3": run_sam3,
-         "segformer": run_segformer, "lodo": run_lodo}[a.method](rows, cfg)
+         "segformer": run_segformer, "lodo": run_lodo, "e10": run_e10}[a.method](rows, cfg)
     else:
         draw(rows, cfg)
 

@@ -250,6 +250,19 @@ FPS full pipeline on TACO / UAVVaste / ZeroWaste-f, FP16 waste-mask IoU vs ORT F
 (RESULTS.md, 18 Nov). Rebuilding with more free memory did not help at 0.6 GB (88 tactics skipped, 119.3 vs
 120.0 ms): the ≥ 3 GB condition is still untested.
 
+## A19 — 2026-11-19 — paper review and revision; ladder figure; ablation table; comparison figure aligned
+Review findings fixed: title/abstract on abandoned claims; site adaptation and distilled head missing from
+Methods; two qualitative figures on the same images; ablation table with three never-run rows and an AUSUC
+column mixing the old and corrected definitions; empty on-device table; empty conclusions; six unverified
+bibliography entries printing VERIFY notes. Changes: `make_tables.ablation` (no dead rows, no AUSUC, n/a where a
+variant cannot produce a metric); `scripts/make_ladder_figure.py` (palette validated with the dataviz validator:
+ordinal blue ramp + orange reference, all checks pass); `make_comparison.py` (SAM 3 with the 16 prompts and
+half-image rule of the tables, new `e10` column, dataset badges instead of rotated labels); Jetson numbers in a
+hand-written `tab:edge` (the generator expects bench JSON files that are not on this machine); new bib entries
+(detect-waste, Mewada et al. 2025, TrashDet, Garberus, X3D-IWDD, SAM 3-assisted YOLO, semi-supervised
+distillation), IWDD entry corrected (full author list incl. B. Vento, pages 539–548).
+Decision: keep the three remaining queue jobs; add none.
+
 ---
 
 ## Template for the next entries

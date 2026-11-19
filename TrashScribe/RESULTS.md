@@ -564,13 +564,49 @@ post-processing 43 / 35 / 76 ms grows with the 4.3 / 2.4 / 13.5 objects per fram
 15 W; the first four Hiera blocks take 55 of 122 ms. To do: rerun with locked clocks, ≥ 3 GB free and
 tegrastats (docs/JETSON.md).
 
+**2026-11-19, 12:30 — results of 17–19 Nov, Jetson in the paper, full manuscript revision.**
+New runs (fair SAM 3 = 16 prompts, masks ≤ half image):
+
+| site | SAM 3 | LODO | SegFormer LODO | + SAM 3 labels (E9) | + 10 labels (E10) | + 50 labels | E4 |
+|---|---|---|---|---|---|---|---|
+| TACO | 0.713 | 0.630 | queued | **0.783** | **0.733** | – | 0.885 |
+| ZeroWaste-f | 0.783 | 0.747 | queued | **0.805** | **0.843** | – | 0.912 |
+| UAVVaste | 0.424 | 0.262 | **0.480** | 0.375 | 0.289 | 0.294 | 0.490 |
+| MJU-Waste | 0.221 | 0.055 | 0.104 | **0.231** | **0.751** | – | 0.895 |
+| BePLi v2 | 0.424 | 0.282 | 0.276 | 0.398 | **0.454** | – | 0.616 |
+
+* Ten labelled images: at or above SAM 3 on TACO (fair rule; raw SAM 3 0.759 is above it), ZeroWaste-f, MJU, BePLi.
+  SAM 3 labels: above SAM 3 on TACO (0.783 > 0.759 raw too), ZeroWaste-f, MJU. **Aerial is the exception**:
+  50 images add nothing (0.294), and a fully fine-tuned SegFormer-B2 transfers far better there (0.480 vs 0.262),
+  plausibly scale (frozen encoder keeps ground-level object sizes).
+* SAM 3 with the 4 waste words: TACO 0.443, ZeroWaste-f 0.774, UAVVaste 0.417, MJU 0.119, BePLi 0.420 (fair):
+  the 16 prompts are stronger on every dataset. Grounding DINO→SAM 2: 0.510 / 0.273 / 0.183 / 0.154 / 0.180.
+* `e5_ablate_lente_rgb` (no description at all): pooled IoU 0.877 vs E4 0.870: description costs nothing.
+* Jetson (owner, 18 Nov; JetPack 5.1.1, TRT 8.5.2, 15 W, clocks NOT locked, 0.6 GB free at build): FP16 engine
+  119.3 ms (8.3 FPS), FP32 189.3 ms; full pipeline 184 / 178 / 218 ms on TACO / UAVVaste / ZeroWaste-f (5.4 / 5.6 /
+  4.6 FPS); FP16 vs FP32 mask IoU ≥ 0.995. SAM 3 cannot run on JetPack 5.1 (Python 3.8). Power, peak memory and
+  locked-clock numbers still missing.
+* Remaining queue: E1-BePLi (running, ends ≈ 17:00), SegFormer-B2 LODO TACO and ZeroWaste-f (≈ 11 h each). All
+  three kept: they fill the last empty cells of the paper's main table; SegFormer matters more now that it beats
+  TrashScribe on aerial transfer. No run added.
+* **Manuscript revised (review of 19 Nov)**: new title "TrashScribe: Segmenting and Describing Waste across
+  Environments on an Edge Device"; abstract, introduction (background, four problems, approach, contributions,
+  roadmap), related work (+ detect-waste, TrashDet, IWDD contest of Bouwmans, Greco, ..., Vento, Garberus, X3D,
+  CLIP zero-shot classification, SAM 3 teachers, semi-supervised distillation), method (4 subsections, with the
+  distilled CLIP head and the three site-adaptation procedures), setup (protocol table), results (6 subsections;
+  new Fig. `ladder` from `scripts/make_ladder_figure.py`; comparison figure now with 16-prompt SAM 3 and a
+  10-label column; redundant qualitative figure and its table removed; ablation table without dead rows or the
+  mixed AUSUC column; Jetson table filled), discussion with use cases, limitations and future work, conclusions.
+  All six VERIFY bibliography notes resolved. 24 pages, no em dashes, no ", and". Title page and cover letter
+  updated.
+
 <!-- AUTO:BEGIN (scripts/report_results.py) -->
 
-_Tables regenerated 2026-11-19 10:11 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._
+_Tables regenerated 2026-11-19 11:00 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._
 
 ### Queue status
 
-Snapshot 2026-11-19 10:11 · service active · RAM 1.2/8.0 GB · GPU 37% · 0.1 GB · 53 °C · 420 MHz · grid ends ≤ **Fri 20 Nov 2026, 14:24** (all jobs at full length; early stops make it sooner). Live view: `conda activate trashscribe && python scripts/progress.py --watch 30`.
+Snapshot 2026-11-19 11:00 · service active · RAM 4.8/8.0 GB · GPU 63% · 6.0 GB · 87 °C · 840 MHz · grid ends ≤ **Fri 20 Nov 2026, 15:08** (all jobs at full length; early stops make it sooner). Live view: `conda activate trashscribe && python scripts/progress.py --watch 30`.
 
 | # | run | status | epochs | best validation (pooled IoU, desc mAP) | time | ends |
 |---|---|---|---|---|---|---|
@@ -619,9 +655,9 @@ Snapshot 2026-11-19 10:11 · service active · RAM 1.2/8.0 GB · GPU 37% · 0.1 
 | 43 | `e3_lodo_uavvaste__segformer_mit-b2` | done | 40/40 | ep 36: IoU 0.865 | 12.1 h |  |
 | 44 | `e3_lodo_bepli__segformer_mit-b2` | done | 30/40 | ep 22: IoU 0.909 | 8.7 h |  |
 | 45 | `e5_ablate_lente_rgb` | done | 39/40 | ep 31: IoU 0.841, mAP 0.276 | 7.3 h |  |
-| 46 | `e1_indomain_bepli` | queued | 0/40 |  | ~6.1 h | ≤ 16:17 |
-| 47 | `e3_lodo_taco__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 03:20 |
-| 48 | `e3_lodo_zerowaste__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 14:24 |
+| 46 | `e1_indomain_bepli` | **running** (train) | 3/40 | ep 3: IoU 0.629, mAP 0.655 | 48 min | ≤ 17:01 |
+| 47 | `e3_lodo_taco__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 04:04 |
+| 48 | `e3_lodo_zerowaste__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 15:08 |
 
 ### All finished TrashScribe runs (test split, pooled over the run's test datasets)
 

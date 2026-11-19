@@ -79,19 +79,27 @@ def ladder():
 
 
 def ablation():
-    runs = [("Full TrashScribe", "e4_heldout_classes"), ("-- transplant", "e5_ablate_no_transplant"),
-            ("-- adversary", "e5_ablate_no_adversary"), ("-- MixStyle", "e5_ablate_no_mixstyle"),
-            ("-- all debiasing", "e5_ablate_no_debias"), ("-- dense supervision", "e5_ablate_no_dense"),
-            ("LoRA $r{=}8$ instead of adapters", "e5_ablate_lora8"), ("Adapters attn+MLP", "e5_ablate_adapters_both"),
-            ("+ geometric gate (depth)", "e5_ablate_geometry"), ("Closed-vocabulary probe", "e5_ablate_probe"),
-            ("LENTE recipe only", "e5_ablate_lente_rgb"), ("Full, 640\\,px (edge)", "e6_edge_640")]
+    """Ablations of E4 (19 Nov): the variants removed from the queue on 13 Nov are not listed; AUSUC is
+    left out because runs evaluated before 13 Nov used an underestimating definition (see RESULTS.md).
+    Naming and description are shown only where the variant can produce them."""
+    runs = [("Full \\trashscribe{} (E4)", "e4_heldout_classes", "all"),
+            ("-- object transplant", "e5_ablate_no_transplant", "all"),
+            ("-- environment adversary", "e5_ablate_no_adversary", "all"),
+            ("-- MixStyle", "e5_ablate_no_mixstyle", "all"),
+            ("-- all three", "e5_ablate_no_debias", "all"),
+            ("-- dense pixel loss", "e5_ablate_no_dense", "all"),
+            ("closed-vocabulary probe head", "e5_ablate_probe", "desc"),
+            ("no description (segmentation only)", "e5_ablate_lente_rgb", "seg"),
+            ("Full, 640\\,px (deployed model, E6)", "e6_edge_640", "all")]
     rows = []
-    for label, r in runs:
+    for label, r, what in runs:
         m = load(r)
         s = (m or {}).get("summary", {})
-        rows.append(f"{label} & {g(s, 'waste_iou')} & {g(s, 'desc_map')} & {g(s, 'naming', 'seen')} & "
-                    f"{g(s, 'naming', 'unseen')} & {g(s, 'naming', 'H')} & {g(s, 'naming_ausuc', 'ausuc')} & "
-                    f"{g(s, 'leak_intrinsic', 'probe_acc')} \\\\")
+        na = "n/a"
+        desc = g(s, "desc_map") if what in ("all", "desc") else na
+        nam = [g(s, "naming", k) for k in ("seen", "unseen", "H")] if what == "all" else [na] * 3
+        rows.append(f"{label} & {g(s, 'waste_iou')} & {desc} & " + " & ".join(nam) +
+                    f" & {g(s, 'leak_intrinsic', 'probe_acc')} \\\\")
     write("tab_ablation", "\n".join(rows) + "\n")
 
 

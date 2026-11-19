@@ -1,6 +1,6 @@
 # Experiments: protocols, configs, results, reading
 
-Numbers are fractions (IoU, AP) on the **test split**, as of 17 Nov 2026 22:30. The always-current tables
+Numbers are fractions (IoU, AP) on the **test split**, as of 19 Nov 2026 12:30. The always-current tables
 are at the bottom of [RESULTS.md](../RESULTS.md) (regenerated every 15 min) and in `runs/<run>/test_metrics.json`.
 All runs are **single-seed**: treat differences below about 3 mAP points or 0.1 in H as noise.
 
@@ -13,17 +13,17 @@ no test object), plus BePLi's fishing net as a text-only class: seven unseen cla
 
 | ID | Config(s) | Question | Status |
 |---|---|---|---|
-| E1 | `e1_indomain_<ds>` | one dataset alone (in-domain reference) | 4/5 done, BePLi queued |
+| E1 | `e1_indomain_<ds>` | one dataset alone (in-domain reference) | 4/5 done, BePLi running |
 | E2 | `e2_multi_domain` | all datasets, no held-out classes | removed 13 Nov (E4 serves as multi-domain model) |
 | E3 | `e3_lodo_<ds>` | leave one dataset out of training and selection | 5/5 done |
 | E3b | `e3b_lodo_mju_negatives` | E3-MJU + 243 COCO indoor negatives | done |
 | E4 | `e4_heldout_classes` | all five datasets, 7 held-out classes (main model) | done |
-| E5 | `e5_ablate_*` | ablations of E4 (probe, no_dense, no_debias, no_transplant, no_adversary, no_mixstyle; lente_rgb queued; lora8 / adapters_both / geometry removed 13 Nov) | 6 done, 1 queued |
+| E5 | `e5_ablate_*` | ablations of E4 (probe, no_dense, no_debias, no_transplant, no_adversary, no_mixstyle, lente_rgb; lora8 / adapters_both / geometry removed 13 Nov) | 7 done |
 | E6 | `e6_edge_640` | E4 recipe at 640 px (deployment model) | done, exported to ONNX |
 | E7 | `e7_heldout_values` | E4 with 3 descriptor values never supervised | done |
 | E8 | `e8_clip_distill` | E7 + dense head distilled from CLIP crop embeddings | done |
-| E9 | `e9_sam3_<ds>` | LODO model fine-tuned with SAM 3 labels of the site's unlabelled images | MJU, UAVVaste, BePLi, TACO done; ZeroWaste queued |
-| E10 | `e10_k10_<ds>`, `e10_k50_uavvaste` | LODO model fine-tuned with 10 (50) labelled site images | UAVVaste, BePLi done; TACO running; ZeroWaste, MJU, UAVVaste-50 queued |
+| E9 | `e9_sam3_<ds>` | LODO model fine-tuned with SAM 3 labels of the site's unlabelled images | 5/5 done |
+| E10 | `e10_k10_<ds>`, `e10_k50_uavvaste` | LODO model fine-tuned with 10 (50) labelled site images | 6/6 done |
 | baselines | `<cfg>__segformer_mit-b2`, `e4_heldout_classes__zeroshot*`, `e3_lodo_<ds>__zeroshot_sam3obj` | SegFormer-B2 LODO; OWLv2→SAM2, Grounding DINO→SAM2, SAM 3 zero-shot; SAM 3 pseudo-label jobs for E9 | SegFormer MJU done (4 queued); OWLv2, SAM 3 (16 prompts, raw + fair) done; SAM 3 4-word and Grounding DINO queued |
 
 **SAM 3 evaluation rule.** 16 prompts (4 waste words: litter, trash, garbage, plastic waste; 12 object nouns
@@ -47,15 +47,15 @@ waste words alone SAM 3's presence head rejects waste in non-litter scenes (offi
 | SAM 3 zero-shot, 16 prompts, raw | 0.759 | 0.793 | 0.424 | 0.221 | 0.272 | 0.579 |
 | SAM 3 zero-shot, 16 prompts, fair | 0.713 | 0.783 | 0.424 | 0.221 | 0.424 | 0.613 |
 
-### Edge model vs SAM 3 by amount of site data (paper Table `tab:ladder`)
+### Edge model vs SAM 3 by amount of site data (paper Fig. `ladder`, Table `tab:ladder`)
 
-| site | SAM 3 (fair, no site data) | LODO | + negatives (E3b) | + SAM 3 labels (E9) | + 10 labels (E10) | + 50 labels | site seen (E4) |
-|---|---|---|---|---|---|---|---|
-| TACO | 0.713 | 0.630 | – | **0.783** | running | – | **0.885** |
-| ZeroWaste-f | 0.783 | 0.747 | – | queued | queued | – | **0.912** |
-| UAVVaste | 0.424 | 0.262 | – | 0.375 | 0.289 | queued | **0.490** |
-| MJU-Waste | 0.221 | 0.055 | **0.363** | **0.231** | queued | – | **0.895** |
-| BePLi v2 | 0.424 | 0.282 | – | 0.398 | **0.454** | – | **0.616** |
+| site | SAM 3 (fair, no site data) | LODO | SegFormer LODO | + negatives (E3b) | + SAM 3 labels (E9) | + 10 labels (E10) | + 50 labels | site seen (E4) |
+|---|---|---|---|---|---|---|---|---|
+| TACO | 0.713 (raw 0.759) | 0.630 | queued | – | **0.783** | **0.733** | – | **0.885** |
+| ZeroWaste-f | 0.783 (raw 0.793) | 0.747 | queued | – | **0.805** | **0.843** | – | **0.912** |
+| UAVVaste | 0.424 | 0.262 | **0.480** | – | 0.375 | 0.289 | 0.294 | **0.490** |
+| MJU-Waste | 0.221 | 0.055 | 0.104 | **0.363** | **0.231** | **0.751** | – | **0.895** |
+| BePLi v2 | 0.424 (raw 0.272) | 0.282 | 0.276 | – | 0.398 | **0.454** | – | **0.616** |
 
 Bold = at or above SAM 3. SAM 3 label quality against the real annotations of the site's training images
 (recorded only, never used): TACO 0.757, UAVVaste 0.485, MJU 0.236 (precision 0.24: desk objects labelled
