@@ -224,6 +224,32 @@ that module, so the Jetson runtime would have failed (albumentations is not in r
 import is now inside `build_augment`. Edge export of E6 done (`runs/e6_edge_640/export/`).
 Docs: `AGENTS.md`, `CLAUDE.md`, `docs/{CONTEXT,ARCHITECTURE,EXPERIMENTS,OPERATIONS,JETSON,NEXT_STEPS,MIGRATION}.md`.
 
+## A18 — 2026-11-18 — first steps on the Jetson (e6_edge_640)
+Hypothesis: the exported E6 graph builds and runs on the owner's Orin Nano as documented in `docs/JETSON.md`.
+Finding: the board runs **JetPack 5.1.1** (L4T 35.3.1, TensorRT 8.5.2, CUDA 11.4, Python 3.8), not JetPack 6.
+Changes: `.venv` on `dl_env` (torch 2.0.0+nv23.05, CUDA) with the JetPack `tensorrt` / `onnx_graphsurgeon`
+symlinked, onnxruntime 1.19.2 CPU; `scripts/onnx_for_trt85.py` (TRT 8.5 has no LayerNormalization importer and
+rejects OneHot computing shapes in the HF mask decoder: 34 LN nodes decomposed, graph constant-folded 3,852 →
+1,184 nodes, max difference to the original 8.5e-6 under ONNX Runtime), called by `build_trt.sh` on TRT < 8.6;
+`build_trt.sh` drops `--builderOptimizationLevel` (TRT ≥ 8.6 only); `bench_edge.py --check` now uses 5 real
+frames when `--images` is given and reports the waste-mask IoU against FP32; `scripts/fetch_edge_images.py`
+(30 test-split images of TACO, ZeroWaste-f, UAVVaste over HTTP range requests, ≤ 1024 px);
+`scripts/jetson_suite.sh` / `jetson_progress.sh` / `jetson_summary.py` / `jetson_env.py` (all measurements of
+`docs/JETSON.md`, resumable, `trashscribe-jetson` user unit). Tests on the device: 11 pass, 1 skipped, 2 need
+training-only packages (albumentations), as expected.
+Result so far (NOT a paper number: clocks unlocked, desktop on the GPU, 0.6 GB free): first FP16 engine
+120.0 ms GPU compute (8.3 FPS, trtexec, CUDA graph); 81 tactics of the fused Hiera stage-1/2 attention regions
+skipped for memory (they ask 1.4 to 1.7 GB); blocks 0 to 3 take 55 of 122 ms. Kept as `*_fp16_lowmem.*`.
+Decision: build again after `sudo jetson_clocks` with ≥ 3 GB free (the suite now waits for both before building).
+Not possible on JetPack 5.1: SAM 3 on the device and the PyTorch backend (transformers 5.2 needs Python ≥ 3.10).
+MJU-Waste (Google Drive) and BePLi v2 (9.5 GB tar.gz at about 0.6 MB/s) images not fetched.
+Second fix: engines built by TRT 8.5 contain the InstanceNormalization plugin; `TrtBackend` now calls
+`trt.init_libnvinfer_plugins` (trtexec does it implicitly; without it deserialization fails).
+Full suite result (same caveats: clocks unlocked, 0.6 GB free, no power): FP16 119.3 ms trtexec, 5.4 / 5.6 / 4.6
+FPS full pipeline on TACO / UAVVaste / ZeroWaste-f, FP16 waste-mask IoU vs ORT FP32 ≥ 0.995 on real frames
+(RESULTS.md, 18 Nov). Rebuilding with more free memory did not help at 0.6 GB (88 tactics skipped, 119.3 vs
+120.0 ms): the ≥ 3 GB condition is still untested.
+
 ---
 
 ## Template for the next entries

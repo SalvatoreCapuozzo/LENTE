@@ -1,4 +1,6 @@
 # Jetson Orin Nano 8 GB, JetPack 6.x (L4T r36, CUDA 12.x, TensorRT 10.x, Python 3.10).
+# JetPack 5.1.x (TensorRT 8.5, Python 3.8) also works: see docs/JETSON.md, "The device actually in use"
+# (torch 2.0.0+nv23.05 wheel, onnxruntime CPU for --check, onnx + onnx_graphsurgeon for onnx_for_trt85.py).
 #
 # 1) PyTorch for Jetson: install NVIDIA's wheel for your JetPack (do NOT pip install torch
 #    from PyPI, it has no CUDA for aarch64/Tegra). See NVIDIA's "Installing PyTorch for
