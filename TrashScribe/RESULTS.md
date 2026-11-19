@@ -553,11 +553,11 @@ benchmark columns. Edge export done: `runs/e6_edge_640/export/` (ONNX 127.5 MB, 
 
 <!-- AUTO:BEGIN (scripts/report_results.py) -->
 
-_Tables regenerated 2026-11-17 22:30 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._
+_Tables regenerated 2026-11-19 10:11 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._
 
 ### Queue status
 
-Snapshot 2026-11-17 22:30 · service active · RAM 5.7/8.0 GB · GPU 93% · 6.0 GB · 86 °C · 1155 MHz · grid ends ≤ **Fri 20 Nov 2026, 18:38** (all jobs at full length; early stops make it sooner). Live view: `conda activate trashscribe && python scripts/progress.py --watch 30`.
+Snapshot 2026-11-19 10:11 · service active · RAM 1.2/8.0 GB · GPU 37% · 0.1 GB · 53 °C · 420 MHz · grid ends ≤ **Fri 20 Nov 2026, 14:24** (all jobs at full length; early stops make it sooner). Live view: `conda activate trashscribe && python scripts/progress.py --watch 30`.
 
 | # | run | status | epochs | best validation (pooled IoU, desc mAP) | time | ends |
 |---|---|---|---|---|---|---|
@@ -595,20 +595,20 @@ Snapshot 2026-11-17 22:30 · service active · RAM 5.7/8.0 GB · GPU 93% · 6.0 
 | 32 | `e9_sam3_taco` | done | 12/12 | ep 12: IoU 0.836, mAP 0.741 | 2.4 h |  |
 | 33 | `e10_k10_uavvaste` | done | 6/6 | ep 6: IoU 0.834, mAP 0.732 | 73 min |  |
 | 34 | `e10_k10_bepli` | done | 6/6 | ep 6: IoU 0.890, mAP 0.749 | 72 min |  |
-| 35 | `e10_k10_taco` | **running** (train) | 3/6 | ep 3: IoU 0.836, mAP 0.719 | 43 min | ≤ 23:09 |
-| 36 | `e10_k10_zerowaste` | queued | 0/6 |  | ~81 min | ≤ Wed 18 Nov 00:30 |
-| 37 | `e10_k10_mju` | queued | 0/6 |  | ~83 min | ≤ Wed 18 Nov 01:53 |
-| 38 | `e10_k50_uavvaste` | queued | 0/6 |  | ~83 min | ≤ Wed 18 Nov 03:16 |
-| 39 | `e3_lodo_zerowaste__zeroshot_sam3obj` | queued |  |  | ~17 min | ≤ Wed 18 Nov 03:33 |
-| 40 | `e9_sam3_zerowaste` | queued | 0/12 |  | ~2.6 h | ≤ Wed 18 Nov 06:09 |
-| 41 | `e4_heldout_classes__zeroshot_sam3` | queued |  |  | ~49 min | ≤ Wed 18 Nov 06:58 |
-| 42 | `e4_heldout_classes__zeroshot_gdino` | queued |  |  | ~49 min | ≤ Wed 18 Nov 07:46 |
-| 43 | `e3_lodo_uavvaste__segformer_mit-b2` | queued | 0/40 |  | ~10.9 h | ≤ Wed 18 Nov 18:43 |
-| 44 | `e3_lodo_bepli__segformer_mit-b2` | queued | 0/40 |  | ~11.0 h | ≤ Thu 19 Nov 05:41 |
-| 45 | `e5_ablate_lente_rgb` | queued | 0/40 |  | ~8.1 h | ≤ Thu 19 Nov 13:45 |
-| 46 | `e1_indomain_bepli` | queued | 0/40 |  | ~7.0 h | ≤ Thu 19 Nov 20:43 |
-| 47 | `e3_lodo_taco__segformer_mit-b2` | queued | 0/40 |  | ~11.0 h | ≤ Fri 20 Nov 07:40 |
-| 48 | `e3_lodo_zerowaste__segformer_mit-b2` | queued | 0/40 |  | ~11.0 h | ≤ Fri 20 Nov 18:38 |
+| 35 | `e10_k10_taco` | done | 6/6 | ep 6: IoU 0.837, mAP 0.728 | 74 min |  |
+| 36 | `e10_k10_zerowaste` | done | 6/6 | ep 6: IoU 0.706, mAP 0.711 | 66 min |  |
+| 37 | `e10_k10_mju` | done | 6/6 | ep 6: IoU 0.833, mAP 0.726 | 68 min |  |
+| 38 | `e10_k50_uavvaste` | done | 6/6 | ep 6: IoU 0.834, mAP 0.725 | 67 min |  |
+| 39 | `e3_lodo_zerowaste__zeroshot_sam3obj` | done |  |  | 1.7 h |  |
+| 40 | `e9_sam3_zerowaste` | done | 12/12 | ep 10: IoU 0.949, mAP 0.713 | 2.4 h |  |
+| 41 | `e4_heldout_classes__zeroshot_sam3` | done |  |  | 39 min |  |
+| 42 | `e4_heldout_classes__zeroshot_gdino` | done |  |  | 24 min |  |
+| 43 | `e3_lodo_uavvaste__segformer_mit-b2` | done | 40/40 | ep 36: IoU 0.865 | 12.1 h |  |
+| 44 | `e3_lodo_bepli__segformer_mit-b2` | done | 30/40 | ep 22: IoU 0.909 | 8.7 h |  |
+| 45 | `e5_ablate_lente_rgb` | done | 39/40 | ep 31: IoU 0.841, mAP 0.276 | 7.3 h |  |
+| 46 | `e1_indomain_bepli` | queued | 0/40 |  | ~6.1 h | ≤ 16:17 |
+| 47 | `e3_lodo_taco__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 03:20 |
+| 48 | `e3_lodo_zerowaste__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 14:24 |
 
 ### All finished TrashScribe runs (test split, pooled over the run's test datasets)
 
@@ -642,6 +642,12 @@ Naming = generalised zero-shot top-1 over the atlas (seen classes / held-out cla
 | `e9_sam3_taco` | 0.783 | 0.586 | 0.370 (0.248) | 0.208 / 0.007 / 0.014 | 0.208 / 0.012 / 0.023 | 0.004 | 0.300 | 0.554 (0.452) |
 | `e10_k10_uavvaste` | 0.289 | 0.740 | – (–) | – / – / – | – / – / – | – | 0.500 | – (–) |
 | `e10_k10_bepli` | 0.454 | 0.446 | 0.468 (0.370) | 0.109 / 0.000 / 0.000 | 0.108 / 0.003 / 0.006 | 0.004 | 1.100 | – (–) |
+| `e10_k10_taco` | 0.733 | 0.629 | 0.436 (0.248) | 0.080 / – / – | 0.054 / – / – | – | 0.800 | 0.623 (0.452) |
+| `e10_k10_zerowaste` | 0.843 | 0.286 | 0.662 (0.333) | 0.317 / – / – | 0.311 / – / – | – | 0.700 | – (–) |
+| `e10_k10_mju` | 0.751 | 0.502 | – (–) | – / – / – | – / – / – | – | 0.900 | – (–) |
+| `e10_k50_uavvaste` | 0.294 | 0.768 | – (–) | – / – / – | – / – / – | – | 0.600 | – (–) |
+| `e9_sam3_zerowaste` | 0.805 | 0.287 | 0.390 (0.333) | – / 0.004 / – | – / 0.021 / – | – | 0.200 | – (–) |
+| `e5_ablate_lente_rgb` | 0.877 | 0.574 | 0.252 (0.226) | 0.007 / 0.074 / 0.013 | 0.007 / 0.074 / 0.013 | 0.001 | 0.000 | 0.974 (0.748) |
 
 ### Waste segmentation per test dataset (IoU / boundary F1)
 
@@ -677,16 +683,26 @@ Naming = generalised zero-shot top-1 over the atlas (seen classes / held-out cla
 | `e9_sam3_taco` | 0.783 / 0.586 |  |  |  |  | 0.783 |
 | `e10_k10_uavvaste` |  |  | 0.289 / 0.740 |  |  | 0.289 |
 | `e10_k10_bepli` |  |  |  |  | 0.454 / 0.446 | 0.454 |
+| `e10_k10_taco` | 0.733 / 0.629 |  |  |  |  | 0.733 |
+| `e10_k10_zerowaste` |  | 0.843 / 0.286 |  |  |  | 0.843 |
+| `e10_k10_mju` |  |  |  | 0.751 / 0.502 |  | 0.751 |
+| `e10_k50_uavvaste` |  |  | 0.294 / 0.768 |  |  | 0.294 |
+| `e9_sam3_zerowaste` |  | 0.805 / 0.287 |  |  |  | 0.805 |
+| `e4_heldout_classes__zeroshot_sam3` | 0.473 / 0.573 | 0.791 / 0.229 | 0.417 / 0.627 | 0.119 / 0.077 | 0.271 / 0.416 | 0.592 |
+| `e4_heldout_classes__zeroshot_gdino` | 0.510 / 0.532 | 0.273 / 0.135 | 0.183 / 0.482 | 0.154 / 0.170 | 0.180 / 0.132 | 0.266 |
+| `e3_lodo_uavvaste__segformer_mit-b2` |  |  | 0.480 / 0.702 |  |  | 0.480 |
+| `e3_lodo_bepli__segformer_mit-b2` |  |  |  |  | 0.276 / 0.314 | 0.276 |
+| `e5_ablate_lente_rgb` | 0.876 / 0.737 | 0.920 / 0.399 | 0.491 / 0.802 | 0.909 / 0.678 | 0.631 / 0.583 | 0.877 |
 
 ### E3 leave-one-dataset-out (waste IoU on the dataset never seen in training or selection)
 
 | held-out dataset | OWLv2→SAM2 zero-shot | Grounding DINO→SAM2 zero-shot | SAM 3 zero-shot (4 waste words) | SAM 3 zero-shot (16 prompts) | SAM 3 zero-shot (16 prompts, masks ≤ half image) | SegFormer-B2 (LODO) | TrashScribe LODO IoU | TrashScribe LODO BF1 | + SAM 3 teacher (E9) IoU | + 10 labelled images (E10) IoU | E4 all five IoU | E1 in-domain IoU |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| TACO | 0.121 | – | – | 0.759 | 0.713 | – | 0.630 | 0.548 | 0.783 | – | 0.885 | 0.862 |
-| ZeroWaste-f | 0.243 | – | – | 0.793 | 0.783 | – | 0.747 | 0.293 | – | – | 0.912 | 0.922 |
-| UAVVaste | 0.019 | – | – | 0.424 | 0.424 | – | 0.262 | 0.682 | 0.375 | 0.289 | 0.490 | 0.616 |
-| MJU-Waste | 0.125 | – | – | 0.221 | 0.221 | 0.104 | 0.055 | 0.016 | 0.231 | – | 0.895 | 0.914 |
-| BePLi v2 | 0.137 | – | – | 0.272 | 0.424 | – | 0.282 | 0.338 | 0.398 | 0.454 | 0.616 | – |
+| TACO | 0.121 | 0.510 | 0.473 | 0.759 | 0.713 | – | 0.630 | 0.548 | 0.783 | 0.733 | 0.885 | 0.862 |
+| ZeroWaste-f | 0.243 | 0.273 | 0.791 | 0.793 | 0.783 | – | 0.747 | 0.293 | 0.805 | 0.843 | 0.912 | 0.922 |
+| UAVVaste | 0.019 | 0.183 | 0.417 | 0.424 | 0.424 | 0.480 | 0.262 | 0.682 | 0.375 | 0.289 | 0.490 | 0.616 |
+| MJU-Waste | 0.125 | 0.154 | 0.119 | 0.221 | 0.221 | 0.104 | 0.055 | 0.016 | 0.231 | 0.751 | 0.895 | 0.914 |
+| BePLi v2 | 0.137 | 0.180 | 0.271 | 0.272 | 0.424 | 0.276 | 0.282 | 0.338 | 0.398 | 0.454 | 0.616 | – |
 
 ### E4 held-out classes: retrieval from the atlas entry alone
 
@@ -733,6 +749,6 @@ Unseen-class top-1 by evidence stream alone (default point): descriptor agreemen
 
 ### Training-free references
 
-OWLv2→SAM2 pooled IoU 0.191; Grounding DINO→SAM2 (boxes ≤ half the image) –; SAM 3 (score ≥ 0.5) with 4 waste words –, with 16 prompts 0.579; raw CLIP description macro mAP 0.305; raw CLIP prose naming seen / unseen / H 0.182 / 0.291 / 0.224.
+OWLv2→SAM2 pooled IoU 0.191; Grounding DINO→SAM2 (boxes ≤ half the image) 0.266; SAM 3 (score ≥ 0.5) with 4 waste words 0.592, with 16 prompts 0.579; raw CLIP description macro mAP 0.305; raw CLIP prose naming seen / unseen / H 0.182 / 0.291 / 0.224.
 
 <!-- AUTO:END -->
