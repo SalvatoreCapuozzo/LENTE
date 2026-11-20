@@ -600,13 +600,29 @@ New runs (fair SAM 3 = 16 prompts, masks ≤ half image):
   All six VERIFY bibliography notes resolved. 24 pages, no em dashes, no ", and". Title page and cover letter
   updated.
 
+**2026-11-20, 16:30 — grid finished (queue ended 15:45); final paper update.**
+Last runs: E1-BePLi 0.650 (E4 0.616: the joint model costs 3.4 points on the beach); SegFormer-B2 LODO TACO
+0.746 (TrashScribe LODO 0.630, SAM 3 fair 0.713) and ZeroWaste-f 0.741 (0.747). Over the five environments
+SegFormer-B2 (27.3 M parameters, all trained) transfers **as well as or better than** TrashScribe: level on
+conveyor, beach and indoor; ahead on street and aerial. The frozen encoder brings no transfer advantage here;
+it brings one shared representation for masks, instances and descriptions with 6.6 M trained parameters.
+SegFormer also beats SAM 3 without site data on TACO and UAVVaste.
+Paper (25 pp, clean compile, no em dashes, no ", and"): cross-environment paragraphs rewritten with these
+numbers; new discussion point "The frozen encoder buys efficiency, not transfer"; related-work claim about frozen
+encoders softened ("have been reported", tested here); limitation added (site adaptation tested on TrashScribe
+only). **Owner's real-world deployment added to the introduction**: TrashScribe runs on a remotely guided wheeled
+land rover with a Jetson Orin Nano surveying beaches and natural habitats; autonomous driving is future work; the
+rover is named in the beach use case and in the conclusions. The repository link stays a red placeholder: the owner
+inserts it after creating the new repository. Remaining red notes: LLM-use statement, Jetson power / peak memory,
+faces and licence plates (Declarations), repository link.
+
 <!-- AUTO:BEGIN (scripts/report_results.py) -->
 
-_Tables regenerated 2026-11-19 11:00 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._
+_Tables regenerated 2026-11-20 16:00 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._
 
 ### Queue status
 
-Snapshot 2026-11-19 11:00 · service active · RAM 4.8/8.0 GB · GPU 63% · 6.0 GB · 87 °C · 840 MHz · grid ends ≤ **Fri 20 Nov 2026, 15:08** (all jobs at full length; early stops make it sooner). Live view: `conda activate trashscribe && python scripts/progress.py --watch 30`.
+Snapshot 2026-11-20 16:00 · service inactive · RAM ?/? GB · GPU 35% · 0.1 GB · 49 °C · 225 MHz · grid ends ≤ **Fri 20 Nov 2026, 16:00** (all jobs at full length; early stops make it sooner). Live view: `conda activate trashscribe && python scripts/progress.py --watch 30`.
 
 | # | run | status | epochs | best validation (pooled IoU, desc mAP) | time | ends |
 |---|---|---|---|---|---|---|
@@ -655,9 +671,9 @@ Snapshot 2026-11-19 11:00 · service active · RAM 4.8/8.0 GB · GPU 63% · 6.0 
 | 43 | `e3_lodo_uavvaste__segformer_mit-b2` | done | 40/40 | ep 36: IoU 0.865 | 12.1 h |  |
 | 44 | `e3_lodo_bepli__segformer_mit-b2` | done | 30/40 | ep 22: IoU 0.909 | 8.7 h |  |
 | 45 | `e5_ablate_lente_rgb` | done | 39/40 | ep 31: IoU 0.841, mAP 0.276 | 7.3 h |  |
-| 46 | `e1_indomain_bepli` | **running** (train) | 3/40 | ep 3: IoU 0.629, mAP 0.655 | 48 min | ≤ 17:01 |
-| 47 | `e3_lodo_taco__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 04:04 |
-| 48 | `e3_lodo_zerowaste__segformer_mit-b2` | queued | 0/40 |  | ~11.1 h | ≤ Fri 20 Nov 15:08 |
+| 46 | `e1_indomain_bepli` | done | 36/40 | ep 28: IoU 0.669, mAP 0.710 | 6.8 h |  |
+| 47 | `e3_lodo_taco__segformer_mit-b2` | done | 39/40 | ep 31: IoU 0.858 | 12.2 h |  |
+| 48 | `e3_lodo_zerowaste__segformer_mit-b2` | done | 40/40 | ep 35: IoU 0.755 | 12.0 h |  |
 
 ### All finished TrashScribe runs (test split, pooled over the run's test datasets)
 
@@ -697,6 +713,7 @@ Naming = generalised zero-shot top-1 over the atlas (seen classes / held-out cla
 | `e10_k50_uavvaste` | 0.294 | 0.768 | – (–) | – / – / – | – / – / – | – | 0.600 | – (–) |
 | `e9_sam3_zerowaste` | 0.805 | 0.287 | 0.390 (0.333) | – / 0.004 / – | – / 0.021 / – | – | 0.200 | – (–) |
 | `e5_ablate_lente_rgb` | 0.877 | 0.574 | 0.252 (0.226) | 0.007 / 0.074 / 0.013 | 0.007 / 0.074 / 0.013 | 0.001 | 0.000 | 0.974 (0.748) |
+| `e1_indomain_bepli` | 0.650 | 0.607 | 0.701 (0.370) | 0.244 / 0.000 / 0.000 | 0.220 / 0.000 / 0.000 | 0.029 | 0.400 | – (–) |
 
 ### Waste segmentation per test dataset (IoU / boundary F1)
 
@@ -742,16 +759,19 @@ Naming = generalised zero-shot top-1 over the atlas (seen classes / held-out cla
 | `e3_lodo_uavvaste__segformer_mit-b2` |  |  | 0.480 / 0.702 |  |  | 0.480 |
 | `e3_lodo_bepli__segformer_mit-b2` |  |  |  |  | 0.276 / 0.314 | 0.276 |
 | `e5_ablate_lente_rgb` | 0.876 / 0.737 | 0.920 / 0.399 | 0.491 / 0.802 | 0.909 / 0.678 | 0.631 / 0.583 | 0.877 |
+| `e1_indomain_bepli` |  |  |  |  | 0.650 / 0.607 | 0.650 |
+| `e3_lodo_taco__segformer_mit-b2` | 0.746 / 0.571 |  |  |  |  | 0.746 |
+| `e3_lodo_zerowaste__segformer_mit-b2` |  | 0.741 / 0.271 |  |  |  | 0.741 |
 
 ### E3 leave-one-dataset-out (waste IoU on the dataset never seen in training or selection)
 
 | held-out dataset | OWLv2→SAM2 zero-shot | Grounding DINO→SAM2 zero-shot | SAM 3 zero-shot (4 waste words) | SAM 3 zero-shot (16 prompts) | SAM 3 zero-shot (16 prompts, masks ≤ half image) | SegFormer-B2 (LODO) | TrashScribe LODO IoU | TrashScribe LODO BF1 | + SAM 3 teacher (E9) IoU | + 10 labelled images (E10) IoU | E4 all five IoU | E1 in-domain IoU |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| TACO | 0.121 | 0.510 | 0.473 | 0.759 | 0.713 | – | 0.630 | 0.548 | 0.783 | 0.733 | 0.885 | 0.862 |
-| ZeroWaste-f | 0.243 | 0.273 | 0.791 | 0.793 | 0.783 | – | 0.747 | 0.293 | 0.805 | 0.843 | 0.912 | 0.922 |
+| TACO | 0.121 | 0.510 | 0.473 | 0.759 | 0.713 | 0.746 | 0.630 | 0.548 | 0.783 | 0.733 | 0.885 | 0.862 |
+| ZeroWaste-f | 0.243 | 0.273 | 0.791 | 0.793 | 0.783 | 0.741 | 0.747 | 0.293 | 0.805 | 0.843 | 0.912 | 0.922 |
 | UAVVaste | 0.019 | 0.183 | 0.417 | 0.424 | 0.424 | 0.480 | 0.262 | 0.682 | 0.375 | 0.289 | 0.490 | 0.616 |
 | MJU-Waste | 0.125 | 0.154 | 0.119 | 0.221 | 0.221 | 0.104 | 0.055 | 0.016 | 0.231 | 0.751 | 0.895 | 0.914 |
-| BePLi v2 | 0.137 | 0.180 | 0.271 | 0.272 | 0.424 | 0.276 | 0.282 | 0.338 | 0.398 | 0.454 | 0.616 | – |
+| BePLi v2 | 0.137 | 0.180 | 0.271 | 0.272 | 0.424 | 0.276 | 0.282 | 0.338 | 0.398 | 0.454 | 0.616 | 0.650 |
 
 ### E4 held-out classes: retrieval from the atlas entry alone
 

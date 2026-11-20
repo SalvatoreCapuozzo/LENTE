@@ -3,12 +3,10 @@
 Written 17 Nov 2026, 22:30. Check [RESULTS.md](../RESULTS.md) and `python scripts/progress.py` first: some items
 below may already be done. Deadline: **30 Nov 2026** (NCAA topical collection).
 
-## 0. Runs still in the queue (19 Nov; expected end about Fri 20 Nov evening)
+## 0. Experiments
 
-E1-BePLi (running), SegFormer-B2 LODO on TACO and ZeroWaste-f. All three fill empty cells of Table `tab:lodo`
-(regenerated automatically). When they finish: update the "Segmentation across environments" paragraph and remove
-its red `\tbd`; if SegFormer beats TrashScribe-LODO on TACO or ZeroWaste-f too, say so plainly in the paragraph and
-in the discussion. Re-run `python scripts/make_ladder_figure.py` only if a ladder run changes (none queued).
+The grid is finished (20 Nov). No run is pending. Possible extra runs only if the owner asks: site adaptation
+(E9/E10) for SegFormer-B2, scale augmentation for aerial images, a JetPack 6 board for SAM 3 on the device.
 
 ## 1. Decisions for the owner (ask, do not assume)
 
@@ -38,7 +36,7 @@ in the discussion. Re-run `python scripts/make_ladder_figure.py` only if a ladde
 * Done on 19 Nov: abstract, introduction, related work, method, results, discussion, conclusions rewritten; all
   VERIFY bibliography notes resolved; Jetson numbers in `tab:edge`; ladder figure; comparison figure aligned.
 * Still open: Jetson power / peak memory; LLM-use statement; handling of faces and licence plates in street
-  images (Declarations); anonymised code URL; the three remaining runs; a final read for the style rules
+  images (Declarations); anonymised code URL (the owner inserts it); a final read for the style rules
   (no em dashes, no ", and": `grep -c ', and' paper/main.tex` must only hit the comment on line 6).
 * `docs/SOTA.md` dates from 5 Nov: update it with SAM 3, EfficientSAM3, GSA2Seg and the SAM 3-teacher papers.
 * Submission checklist and anonymisation: `paper/README.md`.

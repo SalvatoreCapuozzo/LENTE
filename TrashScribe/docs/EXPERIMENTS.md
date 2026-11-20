@@ -1,6 +1,6 @@
 # Experiments: protocols, configs, results, reading
 
-Numbers are fractions (IoU, AP) on the **test split**, as of 19 Nov 2026 12:30. The always-current tables
+Numbers are fractions (IoU, AP) on the **test split**, as of 20 Nov 2026 (grid finished). The always-current tables
 are at the bottom of [RESULTS.md](../RESULTS.md) (regenerated every 15 min) and in `runs/<run>/test_metrics.json`.
 All runs are **single-seed**: treat differences below about 3 mAP points or 0.1 in H as noise.
 
@@ -13,7 +13,7 @@ no test object), plus BePLi's fishing net as a text-only class: seven unseen cla
 
 | ID | Config(s) | Question | Status |
 |---|---|---|---|
-| E1 | `e1_indomain_<ds>` | one dataset alone (in-domain reference) | 4/5 done, BePLi running |
+| E1 | `e1_indomain_<ds>` | one dataset alone (in-domain reference) | 5/5 done (BePLi 0.650) |
 | E2 | `e2_multi_domain` | all datasets, no held-out classes | removed 13 Nov (E4 serves as multi-domain model) |
 | E3 | `e3_lodo_<ds>` | leave one dataset out of training and selection | 5/5 done |
 | E3b | `e3b_lodo_mju_negatives` | E3-MJU + 243 COCO indoor negatives | done |
@@ -51,8 +51,8 @@ waste words alone SAM 3's presence head rejects waste in non-litter scenes (offi
 
 | site | SAM 3 (fair, no site data) | LODO | SegFormer LODO | + negatives (E3b) | + SAM 3 labels (E9) | + 10 labels (E10) | + 50 labels | site seen (E4) |
 |---|---|---|---|---|---|---|---|---|
-| TACO | 0.713 (raw 0.759) | 0.630 | queued | – | **0.783** | **0.733** | – | **0.885** |
-| ZeroWaste-f | 0.783 (raw 0.793) | 0.747 | queued | – | **0.805** | **0.843** | – | **0.912** |
+| TACO | 0.713 (raw 0.759) | 0.630 | **0.746** | – | **0.783** | **0.733** | – | **0.885** |
+| ZeroWaste-f | 0.783 (raw 0.793) | 0.747 | 0.741 | – | **0.805** | **0.843** | – | **0.912** |
 | UAVVaste | 0.424 | 0.262 | **0.480** | – | 0.375 | 0.289 | 0.294 | **0.490** |
 | MJU-Waste | 0.221 | 0.055 | 0.104 | **0.363** | **0.231** | **0.751** | – | **0.895** |
 | BePLi v2 | 0.424 (raw 0.272) | 0.282 | 0.276 | – | 0.398 | **0.454** | – | **0.616** |

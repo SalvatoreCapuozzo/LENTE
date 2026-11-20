@@ -50,18 +50,18 @@ Status of these docs: written 17 Nov 2026, 22:30 CET.
    variants when a rule changes, never choose per-dataset rules on test numbers, single-seed differences
    below about 3 mAP points or 0.1 H are noise.
 
-## Current state (19 Nov 2026)
+## Current state (20 Nov 2026)
 
-* Grid: all main runs done. Still in the queue: E1-BePLi, SegFormer-B2 LODO on TACO and ZeroWaste-f (end about
-  Fri 20 Nov evening). `python scripts/progress.py`.
+* Grid: **finished** (queue ended 20 Nov 15:45). The report timer still refreshes RESULTS.md every 15 min.
 * Main results: with the site in training the 34 M edge model beats SAM 3 (848 M) on all five datasets; on a new
   site, 10 labelled images or SAM 3 labels on unlabelled site images bring it to or above SAM 3 on four of five;
   243 generic indoor photos without waste fix the indoor failure (MJU 0.055 → 0.363); aerial litter is the
-  exception (SegFormer-B2 transfers better there). Description at 3× chance; the CLIP-distilled head reads new
-  classes/properties like CLIP in one pass.
-* Jetson (owner, JetPack 5.1.1): about 5 FPS end to end at 15 W, FP16 = FP32; power, peak memory and
-  locked-clock numbers still missing; SAM 3 cannot run on JetPack 5.1.
-* Paper: fully revised on 19 Nov (new title, abstract, introduction, related work incl. the WasteVision/IWDD
-  community, method, results, discussion with use cases, conclusions); 24 pages; red `\tbd` only for the runs
-  above, Jetson power/memory, LLM statement, code URL, ethics (faces).
+  exception. A fully fine-tuned SegFormer-B2 transfers as well or better (no transfer advantage of the frozen
+  encoder). Description at 3× chance; the CLIP-distilled head reads new classes/properties like CLIP in one pass.
+* Real-world use (owner): TrashScribe runs on a remotely guided wheeled land rover with a Jetson Orin Nano that
+  surveys beaches and natural habitats; autonomous driving is future work. The paper's focus stays on the
+  segmentation/description system.
+* Jetson (owner, JetPack 5.1.1): about 5 FPS end to end at 15 W, FP16 = FP32; power and peak memory missing.
+* Paper: 25 pages, final numbers in; red `\tbd` only for the repository link (the owner inserts it after creating
+  the new TrashScribe repository), LLM-use statement, Jetson power/memory, faces/licence plates (Declarations).
 * Deadline: Neural Computing and Applications topical collection, **30 Nov 2026**.

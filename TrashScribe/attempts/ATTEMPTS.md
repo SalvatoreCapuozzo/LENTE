@@ -263,6 +263,12 @@ hand-written `tab:edge` (the generator expects bench JSON files that are not on 
 distillation), IWDD entry corrected (full author list incl. B. Vento, pages 539–548).
 Decision: keep the three remaining queue jobs; add none.
 
+## A20 — 2026-11-20 — grid finished; final numbers; rover use case
+SegFormer-B2 LODO TACO / ZeroWaste-f and E1-BePLi completed the tables. Reading: a fully fine-tuned SegFormer-B2
+transfers as well as TrashScribe or better (street +11.6, aerial +21.8 points), so the paper no longer implies a
+transfer advantage of the frozen encoder. Introduction: the system's deployment on a remotely guided wheeled rover
+(beaches, natural habitats); future work: autonomous driving. Footnote shortened (page 2 overflowed by 7 pt).
+
 ---
 
 ## Template for the next entries

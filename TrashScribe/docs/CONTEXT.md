@@ -51,6 +51,7 @@ Monitoring and Environmental Surveillance". **Deadline 30 Nov 2026.** Double-bli
 | 15 Nov | E7: the text-space descriptor head does **not** read unsupervised values (1 of 3) → no open-vocabulary description claim. SegFormer runs had all failed with a deterministic CUDA OOM at validation → fixed. Improvements implemented: E8 (CLIP-distilled dense head), E3b (COCO indoor negatives), test-time tiling, literature comparison figure (Grounding DINO, SAM 3). Paper restyled to the owner's rules. Queue ordered by significance. E9 (SAM 3 as offline teacher) added. |
 | 16 Nov | Monitor "nan" explained (undefined metrics + a display bug). SAM 3 evaluation found unfair (whole-image masks counted) → re-run with the same half-image rule as the other baselines. Longer E9 training rejected (label-quality ceiling). |
 | 17 Nov | Two clean reboots (queue restarted from `last.pt`). Fair SAM 3 beats every leave-one-out model; SegFormer also fails indoors (0.104); E8 restores CLIP-level open reading in one pass; **E3b lifts MJU from 0.055 to 0.363, above SAM 3**; E10 (10 labelled site images) added to test the owner's claim; first E9/E10 results above SAM 3 on TACO and BePLi. Handover docs written. |
+| 20 Nov | Grid finished; SegFormer-B2 transfers as well or better than TrashScribe; owner's rover deployment (remotely guided, beaches and natural habitats) added to the paper's introduction. |
 
 ## What the paper can claim today (evidence in [EXPERIMENTS.md](EXPERIMENTS.md))
 
@@ -72,7 +73,8 @@ Supported:
 
 Not supported (do not claim): a text-space head better than a closed classifier (0.691 vs 0.712); naming
 unseen classes better than raw CLIP (H 0.12–0.16 vs 0.217); environment removal by adversary / transplant /
-MixStyle (no measurable effect, single seed); beating SAM 3 at a new site with no site data (except MJU with
+MixStyle (no measurable effect, single seed); better cross-environment transfer than a fully fine-tuned SegFormer-B2
+(it transfers as well or better); beating SAM 3 at a new site with no site data (except MJU with
 negatives).
 
 ## Literature anchors (details in [SOTA.md](SOTA.md), written 5 Nov, and in the paper)
