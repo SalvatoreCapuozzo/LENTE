@@ -12,9 +12,9 @@ The grid is finished (20 Nov). No run is pending. Possible extra runs only if th
 
 1. The paper was reframed on 19 Nov (title "TrashScribe: Segmenting and Describing Waste across Environments on an
    Edge Device"). Ask the owner to read the abstract, introduction and conclusions and confirm the framing.
-2. Jetson: re-run the suite with `sudo jetson_clocks` and `sudo tegrastats` (power, peak memory) and ≥ 3 GB free;
-   update Table `tab:edge` (hand-written in `paper/main.tex`) and the "On-device performance" paragraph.
-   SAM 3 on the device needs JetPack 6 (or a container with Python ≥ 3.10).
+2. Jetson: done on 24-25 Nov (JetPack 6.2, clocks locked, power, memory, SAM 3 on the device in PyTorch and in
+   TensorRT FP16, A22); Table `tab:edge` and the "On-device performance" paragraph updated. Still open, optional:
+   the distilled EfficientSAM3 students on the board, INT8 for either model (the paper names both).
 3. Aerial litter is the one environment where the edge model does not reach SAM 3 with few labels. Options:
    scale augmentation / tiling during training, unfreezing more of the encoder, or stating it as the limitation it
    is now in the paper.
@@ -35,8 +35,10 @@ The grid is finished (20 Nov). No run is pending. Possible extra runs only if th
 
 * Done on 19 Nov: abstract, introduction, related work, method, results, discussion, conclusions rewritten; all
   VERIFY bibliography notes resolved; Jetson numbers in `tab:edge`; ladder figure; comparison figure aligned.
-* Still open: Jetson power / peak memory; LLM-use statement; handling of faces and licence plates in street
-  images (Declarations); anonymised code URL (the owner inserts it); a final read for the style rules
+* Done 25 Nov: abstract cut to 242 words; LLM-use statement (Implementation details); faces and licence plates
+  (Declarations: only ZeroWaste states a privacy measure; MJU-Waste shows people, and Fig. `comparison` shows an MJU-Waste
+  frame with an identifiable face as released; blurring it is the owner's call).
+* Still open: anonymised code URL (the owner inserts it); a final read for the style rules
   (no em dashes, no ", and": `grep -c ', and' paper/main.tex` must only hit the comment on line 6).
 * `docs/SOTA.md` dates from 5 Nov: update it with SAM 3, EfficientSAM3, GSA2Seg and the SAM 3-teacher papers.
 * Submission checklist and anonymisation: `paper/README.md`.

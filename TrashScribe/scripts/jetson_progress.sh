@@ -3,7 +3,10 @@
 #   bash scripts/jetson_progress.sh            # one snapshot
 #   bash scripts/jetson_progress.sh --watch    # refresh every 15 s (Ctrl-C to leave; the suite keeps running)
 cd "$(dirname "$0")/.."
-OUT=${OUT:-runs/e6_edge_640/jetson}
+OUT=${OUT:-$(ls -td runs/e6_edge_640/jetson*/ 2>/dev/null | head -1)}   # default: the latest suite folder
+OUT=${OUT%/}
+# GPU devfreq node: 17000000.ga10b on JetPack 5, 17000000.gpu on JetPack 6
+GPU_DF=$(ls -d /sys/class/devfreq/17000000.gpu /sys/class/devfreq/17000000.ga10b 2>/dev/null | head -1)
 show() {
   echo "== trashscribe-jetson unit: $(systemctl --user is-active trashscribe-jetson 2>/dev/null)   ($(date '+%F %T'))"
   if [ ! -f "$OUT/status.log" ]; then echo "(suite not started)"; return; fi
@@ -20,8 +23,8 @@ show() {
     echo "-- running: $cur since $since ($(( ($(date +%s) - $(date -d "$since" +%s)) / 60 )) min); last lines of $OUT/$cur.log:"
     tail -n 3 "$OUT/$cur.log" 2>/dev/null | cut -c1-200
   fi
-  echo "-- clocks: GPU $(( $(cat /sys/class/devfreq/17000000.ga10b/cur_freq) / 1000000 )) MHz," \
-       "locked=$([ "$(cat /sys/class/devfreq/17000000.ga10b/min_freq)" = "$(cat /sys/class/devfreq/17000000.ga10b/max_freq)" ] && echo yes || echo 'NO (sudo jetson_clocks)')" \
+  echo "-- clocks: GPU $(( $(cat $GPU_DF/cur_freq) / 1000000 )) MHz," \
+       "locked=$([ "$(cat $GPU_DF/min_freq)" = "$(cat $GPU_DF/max_freq)" ] && echo yes || echo 'NO (sudo jetson_clocks)')" \
        "| memory available: $(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo) MB"
   if [ -f "$OUT/tegrastats.log" ]; then echo "-- power log: $(wc -l < "$OUT/tegrastats.log") tegrastats samples"
   else echo "-- power log: none yet (sudo tegrastats --interval 500 --logfile $PWD/$OUT/tegrastats.log)"; fi

@@ -10,10 +10,20 @@ TensorRT 8.5 rejects the opset-17 graph of `export_onnx.py` twice:
    so the graph is constant-folded (onnx-graphsurgeon, shipped with JetPack; it replaces
    onnxsim, which has no aarch64 wheel for Python 3.8) until it stops shrinking.
 
-TensorRT >= 8.6 imports the original graph directly; `build_trt.sh` calls this script only
-on older versions. Outputs are compared with ONNX Runtime on the original graph.
+TensorRT >= 8.6 imports LayerNormalization, but TensorRT 10.3 (JetPack 6.2) still stops at the
+OneHot shape computation, so `build_trt.sh` runs this script on every version without onnxsim:
+the full rewrite below TensorRT 8.6, the constant folding alone (--keep-layernorm) from 8.6 on.
+Outputs are compared with ONNX Runtime on the original graph.
 
-    python scripts/onnx_for_trt85.py in.onnx out.onnx [--no-check]
+3. TensorRT 10.3 mis-fuses the first layer of the mask decoder's hypernetwork MLPs with what follows
+   (24 Nov 2026): the FP32 and FP16 engines then give a different waste mask (max |difference| 0.94 on
+   real frames, waste-mask IoU 0.83 with ONNX Runtime) while contour and descriptor maps agree to
+   1e-5. Found by marking intermediate tensors with Polygraphy and bisecting: marking the output of
+   output_hypernetworks_mlps.0/proj_in/MatMul alone makes the engine agree (1.9e-5). With
+   --keep-layernorm these outputs are therefore added as extra graph outputs (256 floats each; the
+   runtime ignores them), which keeps them out of the faulty fused kernel.
+
+    python scripts/onnx_for_trt85.py in.onnx out.onnx [--keep-layernorm] [--no-check]
 """
 import argparse
 
@@ -26,6 +36,8 @@ ap.add_argument("src")
 ap.add_argument("dst")
 ap.add_argument("--no-check", action="store_true", help="skip the ONNX Runtime comparison")
 ap.add_argument("--max-passes", type=int, default=30)
+ap.add_argument("--keep-layernorm", action="store_true",
+                help="only constant-fold (TensorRT >= 8.6 imports LayerNormalization natively)")
 a = ap.parse_args()
 
 
@@ -87,7 +99,18 @@ def fold(m, max_passes):
     return m
 
 
-m = fold(decompose_layernorm(onnx.load(a.src)), a.max_passes)
+m = onnx.load(a.src)
+m = fold(m if a.keep_layernorm else decompose_layernorm(m), a.max_passes)
+if a.keep_layernorm:     # see 3. above
+    marks = [n.output[0] for n in m.graph.node
+             if n.op_type == "MatMul" and "output_hypernetworks_mlps" in n.name and "/proj_in/" in n.name]
+    have = {o.name for o in m.graph.output}
+    inferred = {v.name: v for v in shape_inference.infer_shapes(m).graph.value_info}
+    for t in marks:
+        if t not in have:      # with the inferred type and shape (the checker requires a shape)
+            m.graph.output.append(inferred[t] if t in inferred else
+                                  helper.make_tensor_value_info(t, onnx.TensorProto.FLOAT, [1, 1, 1, 256]))
+    print(f"{len(marks)} hypernetwork proj_in outputs marked (TensorRT 10.3 fusion workaround)")
 onnx.checker.check_model(m)
 onnx.save(m, a.dst)
 print("written", a.dst)

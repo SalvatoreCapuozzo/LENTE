@@ -35,7 +35,13 @@ elif "$PY" -c "import onnxsim" 2>/dev/null; then
   # 1b) simplify shapes (removes the dynamic-shape plumbing of the HF graph)
   "$PY" -m onnxsim "$ONNX" "${BASE}_sim.onnx" && ONNX=${BASE}_sim.onnx
 else
-  echo "onnxsim not installed (pip install onnxsim): building from the raw graph"
+  # 1c) no onnxsim (none for aarch64): constant-fold only, LayerNormalization kept. Needed on
+  # TensorRT 10.3 too, which still rejects the OneHot shape computation of the HF mask decoder.
+  PREP=${BASE}_folded.onnx
+  if [ ! -f "$PREP" ] || [ "$PREP" -ot "$ONNX" ]; then
+    "$PY" "$HERE/onnx_for_trt85.py" "$ONNX" "$PREP" --keep-layernorm
+  fi
+  ONNX=$PREP
 fi
 
 FLAGS=""

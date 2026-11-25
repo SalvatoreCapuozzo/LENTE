@@ -269,6 +269,63 @@ transfers as well as TrashScribe or better (street +11.6, aerial +21.8 points), 
 transfer advantage of the frozen encoder. Introduction: the system's deployment on a remotely guided wheeled rover
 (beaches, natural habitats); future work: autonomous driving. Footnote shortened (page 2 overflowed by 7 pt).
 
+## A21 — 2026-11-24 — Jetson on JetPack 6.2: locked clocks, power, memory, SAM 3 on the device
+Board reflashed to JetPack 6.2 (L4T 36.5.2, TensorRT 10.3, CUDA 12.6). New venv (torch 2.8.0 from jetson-ai-lab;
+2.9+ needs libcudss). Fixes: GPU devfreq node renamed on JetPack 6 (`17000000.gpu`; the old test reported unlocked
+clocks as locked), user-level tegrastats (rails readable without root), engines in `export/jp6/`, constant folding
+also needed on TensorRT 10.3 (OneHot shape computation).
+Hypothesis/check: FP16 = FP32 = ONNX Runtime as on JetPack 5. **Failed first**: both TensorRT 10.3 engines gave a
+different waste mask (IoU 0.81-0.86 with ONNX Runtime; objects/frame 5.5 vs 4.3 of PyTorch and JetPack 5). Not LayerNorm
+(the decomposed graph fails identically), not a token or spatial mix-up; Polygraphy bisection over the 234 waste-path
+tensors: marking `output_hypernetworks_mlps.0/proj_in/MatMul_output_0` alone fixes it, i.e. a fusion bug. Workaround in
+`onnx_for_trt85.py --keep-layernorm` (hypernetwork proj_in outputs marked); same latency; FP32 vs ORT 2e-5.
+Faulty results kept in `runs/e6_edge_640/jetson_jp6/_superseded_2026-11-24/`.
+SAM 3 (`bench_sam3_edge.py`, same prompts/path as its accuracy numbers): library post-processing ran out of memory on
+a cluttered frame (int64 masks at frame size); same masks computed chunked and boolean (verified identical).
+Result: TrashScribe FP16 8.0-10.3 FPS end to end, 13.8 W, 0.5 GB; SAM 3 0.19 FPS, 3.2 GB, 66 J/frame.
+Decision: paper Table `tab:edge`, Sect. "On-device performance", implementation details, abstract, contribution 4,
+use cases, limitations, future work and conclusions updated; the JetPack 5.1.1 figure is cited once for comparison.
+
+## A22 — 2026-11-24 — SAM 3 in TensorRT on the Jetson (sam3_trt)
+Hypothesis: SAM 3 compiled with TensorRT FP16 is much faster than in PyTorch bf16 (5.2 s/frame) but stays orders
+of magnitude slower than TrashScribe; the comparison in `tab:edge` should include it (the owner asked for it).
+Change: `scripts/export_sam3_onnx.py` exports two graphs from the FP32 checkpoint: the image encoder with the three
+FPN levels the detector uses, and the detector/mask decoder for one text prompt; the 16 text embeddings are
+computed once in FP32 and stored (no text encoder on the device). `trtexec --fp16`. Same pre-processing, prompts,
+score threshold and chunked post-processing as the PyTorch run (`bench_sam3_edge.py --backend trt`).
+**Rule fixed before any TensorRT output was seen.** Frames: the 90 edge frames (30 per dataset). Metric: per frame,
+IoU of the union mask (all 16 prompts, score >= 0.5, mask > 0.5 at frame size; empty vs empty = 1) and instance count.
+Reference: PyTorch bf16 through `Sam3Model` (the configuration of SAM 3's accuracy numbers and of its row in
+`tab:edge`). Noise floor: the same metric for PyTorch FP32 (the exported parts, run in PyTorch) against bf16.
+The engine counts as SAM 3 in TensorRT if its mean IoU against bf16 is at least the FP32 one minus 0.02; otherwise
+it is reported as failing and not put in the table as SAM 3.
+Building: one engine of the whole encoder (946 MB graph) was OOM-killed twice (parsing alone 2.1 GB next to the
+desktop); exported instead as four chunks of 8 ViT layers (each ends with a global-attention layer), run back to
+back with one shared activation buffer (TensorRT USER_MANAGED memory). Parity first: the exported parts in PyTorch
+bf16 are bit-identical to `Sam3Model` (only after computing the 72 px position encoding in the model dtype, as
+the library does). Every build skipped one tactic for lack of memory (1.76 GB, FP32 attention scores).
+**First variant: FAIL** (24 Nov): FP32 noise floor 0.9923 (min 0.901); TensorRT FP16 0.649 (66 of 90 frames
+< 0.9), instances/frame 23.6 vs 41.1; 3,077 ms/frame. Diagnosis (25 Nov, one frame, three prompts, PyTorch FP32
+reference): encoder chunks fine (FPN within ~1%, FP16 noise); DETR encoder fine (0.1%); decoder layer 0 fine also
+for the presence row; the presence logit wrong (sign flipped for 2 of 3 prompts), deterministic. Marked tensors
+inside the presence head: LayerNorm output right (0.2%), first Linear output off by >100%; not a transposed or
+foreign weight, not another row, not the LayerNorm parameters, not the Identity-shared weights, not a stream race;
+still wrong as Gemm. PyTorch FP16 gets the presence right, so it is TensorRT, not precision: the same family as
+A21 (a one-row matrix product in a Myelin fusion). Workaround: `sam3_parts.RowMLP` runs the presence head on the
+row repeated 8 times (`--trt-fix rep8`) or as multiply-and-sum (`reduce`); both fix it (presence +2.508/-3.043/-0.676
+vs +2.506/-3.040/-0.674) and compute the same function (5e-7). An FP32 decoder engine cannot be built on the board
+(the fused node needs 1.76 GB). Faulty results kept in `runs/e6_edge_640/jetson_jp6/_superseded_2026-11-25/`.
+**Second variant (`rep8`, 25 Nov, board rebooted, clocks locked again, desktop apps closed), same rule, same
+reference masks: PASS**: IoU 0.9908 (median 0.9976, min 0.865, 1 of 90 frames < 0.9), instances/frame 41.2 vs
+41.1. Result: 3,156 ms/frame (0.32 FPS; encoder 1,118 ms, 124.5 ms per prompt, one prompt 1,265 ms), 1.6 GB,
+14.1 W, 45 J/frame (PyTorch bf16: 5,183 ms, 3.2 GB, 12.7 W, 66 J). TrashScribe 25-33x faster (PyTorch vs PyTorch
+30-36x); SAM 3's image encoder alone is 9-12x the whole TrashScribe pipeline. The faulty engine ran at 3,077 ms and
+14.0 W with Firefox open: the desktop apps did not change the measurement.
+Decision: SAM 3 TensorRT FP16 row added to `tab:edge`; abstract, introduction, contribution 4, implementation
+details, on-device paragraph, limitations (now: no INT8), future work (EfficientSAM3 students) and conclusions say
+3.2 s per frame even with TensorRT instead of 5.2 s / "not attempted". albumentations installed on the board
+(tests: 14 passed).
+
 ---
 
 ## Template for the next entries

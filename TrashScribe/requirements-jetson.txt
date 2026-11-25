@@ -1,19 +1,28 @@
-# Jetson Orin Nano 8 GB, JetPack 6.x (L4T r36, CUDA 12.x, TensorRT 10.x, Python 3.10).
-# JetPack 5.1.x (TensorRT 8.5, Python 3.8) also works: see docs/JETSON.md, "The device actually in use"
-# (torch 2.0.0+nv23.05 wheel, onnxruntime CPU for --check, onnx + onnx_graphsurgeon for onnx_for_trt85.py).
+# Jetson Orin Nano 8 GB, JetPack 6.2 (L4T r36.5, CUDA 12.6, TensorRT 10.3, Python 3.10).
+# Tested set of 24 Nov 2026 (docs/JETSON.md, "JetPack 6.2"). JetPack 5.1.x (TensorRT 8.5, Python 3.8)
+# also runs the TensorRT path: see docs/JETSON.md, "JetPack 5.1.1".
 #
-# 1) PyTorch for Jetson: install NVIDIA's wheel for your JetPack (do NOT pip install torch
-#    from PyPI, it has no CUDA for aarch64/Tegra). See NVIDIA's "Installing PyTorch for
-#    Jetson Platform" page or the jetson-ai-lab pip index.
-# 2) TensorRT python bindings come with JetPack:  python3 -c "import tensorrt"
-# 3) Then:
-numpy<2.0                 # JetPack 6 wheels are built against numpy 1.x
-scipy
-opencv-python             # or JetPack's OpenCV with GStreamer for CSI cameras
+# 0) venv that sees JetPack's TensorRT bindings (python3-libnvinfer, /usr/lib/python3.10/dist-packages):
+#      python3 -m venv --system-site-packages .venv
+# 1) PyTorch for Jetson: NVIDIA's wheel, NOT PyPI (no CUDA for aarch64/Tegra there). From the
+#    jetson-ai-lab index; torch 2.9.x/2.10.x of that index link libcudss, which JetPack 6.2 does not ship:
+#      .venv/bin/pip install --index-url https://pypi.jetson-ai-lab.io/jp6/cu126/+simple \
+#          --extra-index-url https://pypi.org/simple torch==2.8.0 torchvision==0.23.0 "numpy<2"
+# 2) then: .venv/bin/pip install -r requirements-jetson.txt
+numpy==1.26.4             # JetPack 6 wheels are built against numpy 1.x
+opencv-python==4.10.0.84  # 5.x pulls numpy 2
+pillow==11.3.0            # the system Pillow (9.0) lacks Image.Resampling, which transformers 5 needs
+scipy==1.14.1             # the system SciPy 1.8 does not support numpy 1.26
+scikit-learn==1.7.2       # imported by trashscribe.engine (PyTorch backend)
 PyYAML
-pillow
-# optional: onnxruntime-gpu for Jetson (from the jetson-ai-lab index) to run --onnx
-# transformers==5.2.0 only if you want to embed NEW atlas phrases on the device
-# optional: onnxsim (pip) simplifies the graph before scripts/build_trt.sh
-# NOT needed on the device: albumentations (training only; imported lazily since 17 Nov)
+onnx==1.17.0              # IR 10: onnx 1.23 writes IR 14, which onnxruntime 1.23 (and its constant folding) rejects
+onnx-graphsurgeon==0.6.1  # constant folding in scripts/onnx_for_trt85.py (onnxsim has no aarch64 wheel)
+ml-dtypes<0.6             # 0.7 needs numpy 2
+onnxruntime==1.23.2       # CPU, for bench_edge.py --check (FP32 reference)
+transformers==5.2.0       # PyTorch backend (SAM 2.1 encoder), new atlas phrases, SAM 3 on the device
+huggingface-hub>=1.3,<2
+accelerate                # loads SAM 3 straight to the GPU (device_map), no second copy in shared memory
+# optional: polygraphy (TensorRT vs ONNX Runtime per tensor; how the TensorRT 10.3 fusion issue was found)
+albumentations==2.0.8     # training code only (imported lazily since 17 Nov); here so that all of tests/ runs
+opencv-python-headless==4.10.0.84   # pulled by albumentations (albucore): pinned, the latest needs numpy 2
 # Files to copy from the workstation (git-ignored): see docs/JETSON.md, "Files not in git"

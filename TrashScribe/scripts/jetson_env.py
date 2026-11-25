@@ -31,9 +31,13 @@ a = ap.parse_args()
 l4t = read("/etc/nv_tegra_release") or ""
 m = re.search(r"R(\d+).*REVISION: ([\d.]+)", l4t)
 l4t_ver = f"{m.group(1)}.{m.group(2)}" if m else None
+# 36.5.x: apt repo r36.5 (nvidia-jetpack 6.2.2+b24 for 36.5.0, 6.2.3+b81 for 36.5.2)
 jetpack = {"35.3.1": "5.1.1", "35.4.1": "5.1.2", "35.5.0": "5.1.3", "35.6.0": "5.1.4",
-           "36.3.0": "6.0", "36.4.0": "6.1", "36.4.3": "6.2"}.get(l4t_ver)
-gpu = "/sys/class/devfreq/17000000.ga10b"
+           "36.3.0": "6.0", "36.4.0": "6.1", "36.4.3": "6.2", "36.4.4": "6.2.1",
+           "36.5.0": "6.2.2", "36.5.2": "6.2.3"}.get(l4t_ver)
+# GPU devfreq node: 17000000.ga10b on JetPack 5, 17000000.gpu on JetPack 6
+gpu = next((d for d in ("/sys/class/devfreq/17000000.gpu", "/sys/class/devfreq/17000000.ga10b")
+            if Path(d).exists()), "/sys/class/devfreq/17000000.gpu")
 env = {
     "model": (read("/proc/device-tree/model") or "").strip("\x00"),
     "l4t": l4t_ver, "jetpack": jetpack, "kernel": platform.release(), "python": platform.python_version(),
@@ -44,7 +48,9 @@ env = {
     "cpu_max_khz": read("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"),
     "mem": sh("free -m | sed -n 2,3p"),
 }
-env["gpu_clock_locked"] = env["gpu_freq_hz"]["min_freq"] == env["gpu_freq_hz"]["max_freq"]
+g = env["gpu_freq_hz"]
+env["gpu_devfreq"] = gpu
+env["gpu_clock_locked"] = g["min_freq"] is not None and g["min_freq"] == g["max_freq"]
 try:
     import tensorrt
     env["tensorrt"] = tensorrt.__version__
@@ -56,6 +62,11 @@ try:
     env["cudnn"] = torch.backends.cudnn.version()
 except Exception:  # noqa: BLE001
     env["torch"] = None
+try:
+    import transformers
+    env["transformers"] = transformers.__version__
+except Exception:  # noqa: BLE001
+    pass
 try:
     import onnxruntime
     env["onnxruntime"] = onnxruntime.__version__

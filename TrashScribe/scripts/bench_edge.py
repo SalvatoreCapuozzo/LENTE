@@ -40,6 +40,8 @@ ap.add_argument("--images", help="folder of real images for the pipeline timing 
 ap.add_argument("--out", default=None)
 a = ap.parse_args()
 
+# started before the backend: the footprint includes engine, CUDA context and workspace (unified memory)
+mw = D.MemWatch()
 cache = None
 if a.engine:
     backend, size = TrtBackend(a.engine), None
@@ -86,6 +88,7 @@ res = {"backend": name, "size": size, "host": platform.node(), "machine": platfo
 if torch.cuda.is_available():
     res["cuda_peak_mem_mb"] = torch.cuda.max_memory_allocated() / 2 ** 20
     res["gpu"] = torch.cuda.get_device_name(0)
+res["memory_network"] = mw.result()     # backend loaded + network-only timing
 
 if cache:
     from trashscribe.naming import AtlasCache
@@ -124,6 +127,9 @@ if a.check and a.engine and a.onnx:
                                 "max_abs_diff[waste,contour,desc]": np.max(diffs, 0).tolist(),
                                 "waste_mask_pixel_agreement": float(np.mean(agree)),
                                 "waste_mask_iou_engine_vs_fp32": float(np.mean(ious))}
+res["memory_total"] = mw.stop()        # + pipeline (includes the decoded frames held in memory)
+if real_frames:
+    res["memory_total"]["decoded_frames_mb"] = sum(f.nbytes for f in real_frames) / 2 ** 20
 print(json.dumps(res, indent=1))
 out = Path(a.out or (Path(a.run) / "bench" if a.run else Path("runs/bench")))
 out.mkdir(parents=True, exist_ok=True)

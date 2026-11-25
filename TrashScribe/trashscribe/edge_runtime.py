@@ -45,7 +45,10 @@ class TorchBackend:
         if self.half:
             t = t.half()
         o = self.m(t)
-        return torch.sigmoid(o["waste"]).float(), torch.sigmoid(o["contour"]).float(), o["desc"].float()
+        out = torch.sigmoid(o["waste"]).float(), torch.sigmoid(o["contour"]).float(), o["desc"].float()
+        if self.dev.type == "cuda":     # as TrtBackend: return when the network is done, so that the
+            torch.cuda.synchronize()    # pipeline's net/post split is right (CUDA calls are asynchronous)
+        return out
 
 
 class OrtBackend:

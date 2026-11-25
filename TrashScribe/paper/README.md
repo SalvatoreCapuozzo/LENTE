@@ -18,12 +18,12 @@ On this Mac the class needed `tlmgr --usermode install sttools breakurl wrapfig 
 
 ## Journal requirements (read on 5 Nov 2026) and where they are handled
 - [x] Springer Nature LaTeX template, `sn-basic` style, numbered citations in brackets → `\documentclass[pdflatex,sn-basic,Numbered]{sn-jnl}`
-- [x] Abstract 150–250 words → currently 219 with one results sentence still to write (keep it ≤ 30 words)
+- [x] Abstract 150–250 words → 242 words on 25 Nov 2026 (whitespace count of the LaTeX source; 246 without LaTeX commands)
 - [x] 4–6 keywords → 6
 - [x] Double-blind: no names, affiliations, funding or "our previous work" in `main.tex`; self-citations anonymised (`anon_lente`, `anon_mirf`)
 - [x] Headings ≤ 3 levels, decimal numbering (class default)
 - [x] "Statements and Declarations" with Competing interests (mandatory), Data availability (mandatory for research)
-- [ ] LLM use documented in Methods (`\tbd` in Implementation details) — required if AI assisted code/text beyond copy-editing
+- [x] LLM use documented in Methods (end of Implementation details, 25 Nov): Claude Opus 5.5 for launching the run queues designed by the authors and for drafting the text
 - [ ] Figures: when final, export as vector PDF/EPS, lettering 8–12 pt, ≥ 4.5:1 contrast, colour not the only cue; captions start with bold "Fig." (class does it)
 - [ ] Remove every `note = {VERIFY ...}` in `references.bib` after checking the primary source
 - [ ] Replace every red `\tbd{...}` (search `\tbd`)

@@ -63,6 +63,59 @@ def is_jetson() -> bool:
     return platform.machine() == "aarch64" and os.path.exists("/etc/nv_tegra_release")
 
 
+def mem_available_mb() -> float | None:
+    """System-wide MemAvailable (MB). On a Jetson CPU and GPU share this memory."""
+    try:
+        with open("/proc/meminfo") as f:
+            for line in f:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) / 1024
+    except OSError:
+        pass
+    return None
+
+
+class MemWatch:
+    """Footprint of this process on a unified-memory device: MemAvailable when the watch starts
+    (before the model is loaded) minus the lowest MemAvailable seen while it runs, sampled every
+    `period` s in a thread. Includes what torch's allocator does not see (CUDA context, TensorRT
+    engine and workspace, cuDNN/cuBLAS handles); other processes add noise, so keep the desktop quiet.
+    Also reports the process peak RSS (VmHWM) and, on CUDA, torch's peak allocation."""
+
+    def __init__(self, period: float = 0.05):
+        import threading
+        self.period, self.base, self.low = period, mem_available_mb(), mem_available_mb()
+        self._stop = threading.Event()
+        self._t = threading.Thread(target=self._run, daemon=True)
+        self._t.start()
+
+    def _run(self):
+        while not self._stop.wait(self.period):
+            m = mem_available_mb()
+            if m is not None and (self.low is None or m < self.low):
+                self.low = m
+
+    def result(self) -> dict:
+        r = {"mem_available_start_mb": self.base, "mem_available_min_mb": self.low,
+             "footprint_mb": (self.base - self.low) if self.base is not None and self.low is not None else None}
+        try:
+            with open("/proc/self/status") as f:
+                for line in f:
+                    if line.startswith("VmHWM:"):
+                        r["process_peak_rss_mb"] = int(line.split()[1]) / 1024
+        except OSError:
+            pass
+        if torch.cuda.is_available():
+            r["torch_peak_allocated_mb"] = torch.cuda.max_memory_allocated() / 2 ** 20
+            r["torch_peak_reserved_mb"] = torch.cuda.max_memory_reserved() / 2 ** 20
+        return r
+
+    def stop(self) -> dict:
+        self._stop.set()
+        self._t.join()
+        return self.result()
+
+
 def describe(device: torch.device) -> dict:
     d = {"device": str(device), "torch": torch.__version__, "jetson": is_jetson()}
     if device.type == "cuda":

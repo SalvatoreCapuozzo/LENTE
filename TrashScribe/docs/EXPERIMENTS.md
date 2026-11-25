@@ -19,7 +19,7 @@ no test object), plus BePLi's fishing net as a text-only class: seven unseen cla
 | E3b | `e3b_lodo_mju_negatives` | E3-MJU + 243 COCO indoor negatives | done |
 | E4 | `e4_heldout_classes` | all five datasets, 7 held-out classes (main model) | done |
 | E5 | `e5_ablate_*` | ablations of E4 (probe, no_dense, no_debias, no_transplant, no_adversary, no_mixstyle, lente_rgb; lora8 / adapters_both / geometry removed 13 Nov) | 7 done |
-| E6 | `e6_edge_640` | E4 recipe at 640 px (deployment model) | done, exported to ONNX |
+| E6 | `e6_edge_640` | E4 recipe at 640 px (deployment model) | done, exported to ONNX; on the Jetson (JetPack 6.2, 24 Nov): docs/JETSON.md |
 | E7 | `e7_heldout_values` | E4 with 3 descriptor values never supervised | done |
 | E8 | `e8_clip_distill` | E7 + dense head distilled from CLIP crop embeddings | done |
 | E9 | `e9_sam3_<ds>` | LODO model fine-tuned with SAM 3 labels of the site's unlabelled images | 5/5 done |

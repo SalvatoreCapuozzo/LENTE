@@ -34,9 +34,9 @@ Status of these docs: written 17 Nov 2026, 22:30 CET.
    cache, checkpoints, model weights, test images). Before any Jetson step, tell the owner which files to
    copy, using the checklist in [docs/JETSON.md](docs/JETSON.md#files-not-in-git). Do not assume they are
    on the device.
-2. **No on-device numbers exist yet.** Every latency/power/memory figure in the paper is a red `\tbd`. The
-   edge claim and the "SAM 3 cannot run at frame rate on the device" argument need measurements made on the
-   Jetson by the owner (SAM 3 included). Never invent them; laptop numbers are not edge results.
+2. **On-device numbers come only from the Jetson.** Table `tab:edge` holds the JetPack 6.2 runs of 24-25 Nov
+   (`runs/e6_edge_640/jetson_jp6/summary.md`, SAM 3 in PyTorch and in TensorRT included). Never invent device numbers; laptop numbers are not
+   edge results. Clock locking (`sudo jetson_clocks`) needs the owner (no sudo for the agent).
 3. **Host RAM kills VS Code.** On the training workstation, `systemd-oomd` kills the whole user session
    when memory pressure stays above 50 % for 20 s. Never launch heavy jobs from the VS Code terminal; use
    capped `systemd-run --user` units ([docs/OPERATIONS.md](docs/OPERATIONS.md#host-memory)).
@@ -50,7 +50,7 @@ Status of these docs: written 17 Nov 2026, 22:30 CET.
    variants when a rule changes, never choose per-dataset rules on test numbers, single-seed differences
    below about 3 mAP points or 0.1 H are noise.
 
-## Current state (20 Nov 2026)
+## Current state (24 Nov 2026)
 
 * Grid: **finished** (queue ended 20 Nov 15:45). The report timer still refreshes RESULTS.md every 15 min.
 * Main results: with the site in training the 34 M edge model beats SAM 3 (848 M) on all five datasets; on a new
@@ -61,7 +61,13 @@ Status of these docs: written 17 Nov 2026, 22:30 CET.
 * Real-world use (owner): TrashScribe runs on a remotely guided wheeled land rover with a Jetson Orin Nano that
   surveys beaches and natural habitats; autonomous driving is future work. The paper's focus stays on the
   segmentation/description system.
-* Jetson (owner, JetPack 5.1.1): about 5 FPS end to end at 15 W, FP16 = FP32; power and peak memory missing.
-* Paper: 25 pages, final numbers in; red `\tbd` only for the repository link (the owner inserts it after creating
-  the new TrashScribe repository), LLM-use statement, Jetson power/memory, faces/licence plates (Declarations).
+* Jetson (board reflashed to JetPack 6.2, 24 Nov; clocks locked, 15 W): TensorRT FP16 network 47.9 ms, full pipeline
+  97-126 ms (8.0-10.3 FPS), 0.5 GB, 13.8 W (0.72 J/frame). SAM 3 on the same board, 16 prompts: PyTorch bf16
+  5.2 s/frame (0.19 FPS), 3.2 GB, 66 J/frame; TensorRT FP16 (25 Nov, A22) 3.2 s/frame (0.32 FPS), 1.6 GB, 45 J/frame,
+  masks agree with PyTorch bf16 at IoU 0.991 (FP32: 0.992); TrashScribe 25-33x faster, SAM 3's image encoder alone
+  1.12 s. TensorRT 10.3 needed workarounds in both mask decoders (TrashScribe's hypernetwork, SAM 3's presence head:
+  docs/JETSON.md). The JetPack 5.1.1 run (unlocked clocks, ~5 FPS) is kept and cited once.
+* Paper: 25 pages, final numbers in (Jetson included, 24-25 Nov); red `\tbd` only for the repository link (the owner
+  inserts it after creating the new TrashScribe repository). Abstract 242 words (limit 250), LLM-use statement and
+  faces/licence plates statement written on 25 Nov.
 * Deadline: Neural Computing and Applications topical collection, **30 Nov 2026**.
