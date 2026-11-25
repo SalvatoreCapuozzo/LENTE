@@ -39,7 +39,11 @@ Monitoring and Environmental Surveillance". **Deadline 30 Nov 2026.** Double-bli
 * Paper style (binding, 15 Nov): no em dashes, no ", and" constructs, few subsections, headings without
   parentheses and not whole phrases, roadmap paragraph at the end of the introduction, a lead-in paragraph
   before the subsections of every section.
+* American English spelling (binding, 25 Nov): labeled, generalization, anonymized, license, color, toward;
+  TACO class names and titles of cited works keep their own spelling.
 * Do not commit or push unless asked; staging on request is fine.
+* **Do not cite LENTE** in the paper or the cover letter (owner, 25 Nov). The adapter is credited to Houlsby et al.;
+  the LENTE origin stays in these internal docs only. MIRF (`anon_mirf`) is still cited.
 
 ## History of decisions (short)
 
@@ -64,9 +68,11 @@ Supported:
    TrashScribe (0.055) and SegFormer-B2 (0.104) mark people and furniture as waste in an office; 243 generic
    waste-free COCO indoor photos (no target image, no waste label) raise TrashScribe to 0.363, above SAM 3.
 3. **Edge model vs SAM 3, quantified.** With the site in training the 34 M model beats SAM 3 (848 M) on all
-   five datasets (by 6.6 to 67.4 IoU points). At a new site SAM 3 wins on 4 of 5 with no site data; with SAM 3
-   labels of unlabelled site images (E9) or 10 labelled images (E10) the edge model reaches or passes it on
-   TACO, MJU and BePLi so far; UAVVaste still below (50-image run queued).
+   five datasets (by 6.6 to 67.4 IoU points). At a new site with no site data (LODO) SAM 3 (fair rule) wins on all 5;
+   the 243 indoor negatives (E3b, not site data) put MJU above it. With SAM 3 labels of unlabelled site
+   images (E9) or 10 labelled images (E10) the edge model reaches or passes it on TACO, ZeroWaste-f, MJU and
+   BePLi; UAVVaste stays below even with 50 labelled images. 25 Nov: the paper said "four of five" for the
+   no-site-data case in three places; corrected to "all five" everywhere.
 4. **One pass: segmentation + attribute description + open reading.** Description macro mAP 0.691 (3× the
    prevalence floor, 2.3× raw CLIP 0.305); the CLIP-distilled head (E8) retrieves unseen classes like raw
    CLIP (mean AP 0.082 vs 0.078) and reads untrained properties at CLIP's level, inside the same network.

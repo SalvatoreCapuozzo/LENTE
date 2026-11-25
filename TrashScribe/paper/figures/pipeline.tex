@@ -17,7 +17,7 @@
 \node[trn] (a3) at (\cA, 0.45) {\textbf{training batch}\\balanced sampling,\\cross-dataset transplant};
 \node[dev] (d0) at (\cA, -1.75) {\textbf{camera frame}\\on the device, letterboxed\\to $3\times S\times S$};
 % ---------------------------------------------------------------- network
-\node[net, minimum height=33mm] (enc) at (\cB, -0.75) {\textbf{SAM2.1-Hiera-Tiny}\\frozen, with zero-init\\adapters; MixStyle in\\training; optional\\depth gate\\[3pt]features at $S/4$, $S/8$, $S/16$\\(32, 64, 256 channels)};
+\node[net, minimum height=33mm] (enc) at (\cB, -0.75) {\textbf{SAM2.1-Hiera-Tiny}\\frozen, with zero-init\\adapters; MixStyle in\\training\\[3pt]features at $S/4$, $S/8$, $S/16$\\(32, 64, 256 channels)};
 \node[net] (dec) at (\cC, 0.45) {\textbf{waste decoder}\\$P(\mathrm{waste})$, $1\times\frac{S}{4}\times\frac{S}{4}$};
 \node[net] (cont) at (\cC, -0.68) {\textbf{contour head}\\$P(\mathrm{contour})$, $1\times\frac{S}{4}\times\frac{S}{4}$};
 \node[net] (desc) at (\cC, -1.9) {\textbf{descriptor field} $F$\\$512\times\frac{S}{8}\times\frac{S}{8}$,\\in the CLIP text space};

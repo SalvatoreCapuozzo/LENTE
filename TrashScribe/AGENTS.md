@@ -46,6 +46,8 @@ Status of these docs: written 17 Nov 2026, 22:30 CET.
 6. **Paper style rules (owner's, binding):** no em dashes; no ", and" constructs; few subsections;
    section/subsection titles without parentheses and not whole sentences; the introduction ends with a
    roadmap of the sections; every section with subsections starts with a short lead-in.
+   American English spelling (labeled, generalization, anonymized, license, color, toward); titles of
+   cited works keep their published spelling.
 7. **Honesty rules learnt the hard way:** fix an evaluation rule before seeing results, report both
    variants when a rule changes, never choose per-dataset rules on test numbers, single-seed differences
    below about 3 mAP points or 0.1 H are noise.
@@ -53,8 +55,8 @@ Status of these docs: written 17 Nov 2026, 22:30 CET.
 ## Current state (24 Nov 2026)
 
 * Grid: **finished** (queue ended 20 Nov 15:45). The report timer still refreshes RESULTS.md every 15 min.
-* Main results: with the site in training the 34 M edge model beats SAM 3 (848 M) on all five datasets; on a new
-  site, 10 labelled images or SAM 3 labels on unlabelled site images bring it to or above SAM 3 on four of five;
+* Main results: with the site in training the 34 M edge model beats SAM 3 (848 M) on all five datasets; with no
+  site data (LODO) SAM 3 (fair rule) is ahead on all five, not four; on a new site, 10 labelled images or SAM 3 labels on unlabelled site images bring it to or above SAM 3 on four of five;
   243 generic indoor photos without waste fix the indoor failure (MJU 0.055 → 0.363); aerial litter is the
   exception. A fully fine-tuned SegFormer-B2 transfers as well or better (no transfer advantage of the frozen
   encoder). Description at 3× chance; the CLIP-distilled head reads new classes/properties like CLIP in one pass.

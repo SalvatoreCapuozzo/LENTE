@@ -616,6 +616,16 @@ rover is named in the beach use case and in the conclusions. The repository link
 inserts it after creating the new repository. Remaining red notes: LLM-use statement, Jetson power / peak memory,
 faces and licence plates (Declarations), repository link.
 
+**2026-11-25 — manuscript review after the JetPack 6.2 results (A21, A22).** The Jetson numbers written into the
+paper on 24–25 Nov were checked against A21/A22 (TrashScribe FP16 47.9 ms network, 97–126 ms pipeline, 13.8 W,
+0.5 GB; SAM 3 TRT FP16 3.1–3.2 s, PT BF16 5.1–5.2 s; speed-ups 25–33× TRT, 30–36× PT: all consistent). Fixes: pipeline
+figure no longer shows the unused depth gate; "Implementation" split into training, on-device setup and use of AI
+tools; related work says foundation models are too slow (not too large) on the device, as measured; two
+student-beats-teacher interpretations hedged; contribution 1 names its fully fine-tuned and zero-shot baselines;
+conclusions now state the SegFormer-B2 finding (the frozen encoder is a choice for efficiency, not robustness);
+on-device table abbreviated (TRT/PT) to fit the text width, caption reduced to column definitions. 26 pages, clean
+compile, no em dashes, no ", and". Remaining red text: the repository link (owner).
+
 <!-- AUTO:BEGIN (scripts/report_results.py) -->
 
 _Tables regenerated 2026-11-20 16:00 from `runs/*/test_metrics.json` and `runs/*/history.json`. Numbers are fractions (0–1), test split unless stated._

@@ -25,7 +25,7 @@ DATASETS = [("taco", "TACO\nstreet"), ("zerowaste", "ZeroWaste-f\nconveyor"), ("
             ("mju", "MJU-Waste\nindoor"), ("bepli", "BePLi v2\nbeach")]
 BARS = [("e3_lodo_{d}", "no site data", "#86b6ef"),
         ("e9_sam3_{d}", "+ SAM 3 labels on site images", "#3987e5"),
-        ("e10_k10_{d}", "+ 10 labelled site images", "#1c5cab"),
+        ("e10_k10_{d}", "+ 10 labeled site images", "#1c5cab"),
         ("e4_heldout_classes", "site in training", "#0d366b")]
 SAM3 = "#eb6834"
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e4e3df"

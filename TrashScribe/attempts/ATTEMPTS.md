@@ -326,6 +326,12 @@ details, on-device paragraph, limitations (now: no INT8), future work (Efficient
 3.2 s per frame even with TensorRT instead of 5.2 s / "not attempted". albumentations installed on the board
 (tests: 14 passed).
 
+## A23 — 2026-11-25 — severe review of the manuscript after the JetPack 6.2 measurements
+Checked every on-device number against A21/A22. Fixed: stale depth gate in the pipeline figure; overloaded
+Implementation paragraph (split); "too large" → "too slow" for SAM 3 on the device; unhedged interpretations;
+missing SegFormer finding in the conclusions; on-device table 24 pt too wide (TRT/PT abbreviations, 4 pt column
+spacing); caption trimmed to column definitions.
+
 ---
 
 ## Template for the next entries
